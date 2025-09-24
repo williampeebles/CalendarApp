@@ -18,7 +18,7 @@ class Calendar(object):
         self.event = []
 
 
-class WeekGUI():
+class MonthViewGUI():
     def __init__(self):
         self.window = tk.Tk()
         self.window.mainloop()
@@ -27,4 +27,4 @@ class WeekGUI():
 
 
 
-WeekGUI()
+MonthViewGUI()
