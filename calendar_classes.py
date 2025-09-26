@@ -16,6 +16,8 @@ TODO
 """
 import tkinter as tk
 import datetime
+import calendar
+
 class Calendar(object):
     def __init__(self, month, day, year, dayOfWeek, events):
         self.month = month
@@ -24,27 +26,81 @@ class Calendar(object):
         self.dayOfWeek = dayOfWeek
         self.event = []
 
-
 class MonthViewGUI():
     def __init__(self):
         self.window = tk.Tk()
-        root = self.window
-        self.monthsOfYear = {"January":31, "February":28, "March":31, "April":30,
-                             "May":31, "June":30, "July":31, "August":31,
-                             "September":30, "October":31, "November":30, "December":31}
+        self.window.title("Month View Calendar")
+        self.today = datetime.date.today()
+        self.current_month = self.today.month
+        self.current_year = self.today.year
+        self.showing_next = False
 
-        #Displays the days of the week
+        self.header = tk.Label(self.window, font=("Arial", 16, "bold"))
+        self.header.grid(row=0, column=0, columnspan=7)
+
+        self.switch_btn = tk.Button(self.window, text="Show Next Month", command=self.switch_month)
+        self.switch_btn.grid(row=1, column=0, columnspan=7)
+
+        self.frame = tk.Frame(self.window)
+        self.frame.grid(row=2, column=0, columnspan=7)
+
+        self.show_month(self.current_year, self.current_month)
+        self.window.mainloop()
+
+    def switch_month(self):
+        self.showing_next = not self.showing_next
+        if self.showing_next:
+            if self.current_month < 12:
+                year, month = self.current_year, self.current_month + 1
+            else:
+                year, month = self.current_year + 1, 1
+            self.switch_btn.config(text="Show This Month")
+        else:
+            year, month = self.current_year, self.current_month
+            self.switch_btn.config(text="Show Next Month")
+        self.show_month(year, month)
+
+    def show_month(self, year, month):
+        for widget in self.frame.winfo_children():
+            widget.destroy()
+        self.header.config(text=f"{calendar.month_name[month]} {year}")
+
         days_of_the_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-        for col in range(7):
-            tk.Button(root, text=days_of_the_week[col], width=10, height=2).grid(row=0, column=col)
-        numOfDays = 1
+        col = 0
+        while col < 7:
+            tk.Button(self.frame, text=days_of_the_week[col], width=10, height=2).grid(row=0, column=col)
+            col += 1
 
-        #Displays a button for each day of the month
-        for row in range(5):
-            for col in range(7):
-                tk.Button(root, text=numOfDays, anchor="ne",width=10,height=7).grid(row = row+1, column = col)
-                numOfDays += 1
-        root.mainloop()
-
+        first_weekday, num_days = calendar.monthrange(year, month)
+        # Adjust so Sunday is column 0
+        col = (first_weekday + 1) % 7
+        day_num = 1
+        row = 1
+        while day_num <= num_days:
+            if (year, month, day_num) == (self.today.year, self.today.month, self.today.day):
+                fg = "red"
+            else:
+                fg = "black"
+            tk.Button(self.frame, text=day_num, anchor="ne", width=10, height=7, fg=fg).grid(row=row, column=col)
+            day_num += 1
+            col += 1
+            if col > 6:
+                col = 0
+                row += 1
 
 MonthViewGUI()
+# Added: self.window.title("Month View Calendar") to set the window title.
+# Added: self.today = datetime.date.today() to track today's date.
+# Added: self.current_month and self.current_year to store the current month and year.
+# Added: self.showing_next to track which month is displayed.
+# Added: self.header label to display the month and year.
+# Added: self.switch_btn button to toggle between current and next month.
+# Added: self.frame to contain the calendar grid.
+# Replaced: static month display with self.show_month(self.current_year, self.current_month).
+# Added: switch_month method to handle toggling between months.
+# Added: show_month method to dynamically display the correct month and highlight today's date.
+# Changed: Days of the week are displayed using a while loop instead of a for loop.
+# Changed: Calculation of the starting column for the first day using col = (first_weekday + 1) % 7 for correct alignment.
+# Changed: Day buttons are created in a while loop, with today's date highlighted in red.
+# Removed: monthsOfYear dictionary and static button creation for days.
+# Removed: static for loops for days and weeks; replaced with dynamic month rendering.
