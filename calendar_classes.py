@@ -1,12 +1,12 @@
 """
 To Include/Think about
 - Let user choose what month it is
-- Specify what a whole month is
+- Specify what a whole month is - Done
 - The object should include a list of events
 - Click on day then display a list of events
 - Buttons for calendar days
 - Start day, end Day
-
+- Use calendar class to store data
 """
 """
 TODO
@@ -19,12 +19,47 @@ import datetime
 import calendar
 
 class Calendar(object):
-    def __init__(self, month, day, year, dayOfWeek, events):
-        self.month = month
-        self.day = day
-        self.year = year
-        self.dayOfWeek = dayOfWeek
-        self.event = []
+    def __init__(self):
+        self.current_date = datetime.date.today()
+        self.events = {} # title as the keys, and the values as the dates
+
+    def add_event(self, event_id, title, start_time, end_time, description, is_recurring, date):
+        # create an Event object
+        new_event = Event(event_id, title, start_time, end_time, description, is_recurring)
+
+        # store it in events dictionary
+        self.events[new_event.title] = date
+
+
+    def get_event(self, title):
+        if title in self.events:
+            return self.events[title]
+        else:
+            return None
+
+    def update_event(self, date, event_id, new_title=None, new_start=None, new_end=None, new_desc=None, new_recurring=None):
+        if date in self.events:
+            for event in self.events[date]:
+                if event.event_id == event_id:
+                    if new_title is not None:
+                        event.title = new_title
+                    if new_start is not None:
+                        event.start_time = new_start
+                    if new_end is not None:
+                        event.end_time = new_end
+                    if new_desc is not None:
+                        event.description = new_desc
+                    if new_recurring is not None:
+                        event.is_recurring = new_recurring
+
+    def delete_event(self, title):
+        if title in self.events:
+            del self.events[title]
+
+    def get_month_view(self):
+
+        pass
+
 
 class MonthViewGUI():
     def __init__(self):
@@ -88,7 +123,19 @@ class MonthViewGUI():
                 col = 0
                 row += 1
 
+class Event(object):
+    def __init__(self, event_id, title, start_time, end_time, description, is_recurring):
+        self.event_id = event_id
+        self.title = title
+        self.start_time = start_time
+        self.end_time = end_time
+        self.description = description
+        self.is_recurring = is_recurring
+
+
 MonthViewGUI()
+
+
 # Added: self.window.title("Month View Calendar") to set the window title.
 # Added: self.today = datetime.date.today() to track today's date.
 # Added: self.current_month and self.current_year to store the current month and year.
