@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Project creation">
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Added event class and added to the calendar class">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/calendar_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/calendar_classes.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +101,31 @@
       <option name="project" value="LOCAL" />
       <updated>1758893881674</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Project creation">
+      <option name="closed" value="true" />
+      <created>1758945197157</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1758945197157</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Added event class and added to the calendar class">
+      <option name="closed" value="true" />
+      <created>1758945244043</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1758945244043</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Added event class and added to the calendar class">
+      <option name="closed" value="true" />
+      <created>1758945308742</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1758945308742</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -118,6 +141,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Project creation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Project creation" />
+    <MESSAGE value="Added event class and added to the calendar class" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added event class and added to the calendar class" />
   </component>
 </project>

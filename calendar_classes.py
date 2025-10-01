@@ -1,5 +1,6 @@
 """
 To Include/Think about
+
 - Let user choose what month it is
 - Specify what a whole month is - Done
 - The object should include a list of events
@@ -7,13 +8,15 @@ To Include/Think about
 - Buttons for calendar days
 - Start day, end Day
 - Use calendar class to store data
-"""
-"""
+
 TODO
-- Connect days of the month to days of the week
-- Finish Calendar Class
-- Create a GUI for creating a Calendar
+- add buttons to empty days
+- Update Calendar Class
+- Make day of week buttons non clickable
+- add docStrings for classes and methods
+-connect calendar class to monthViewGUI class
 """
+
 import tkinter as tk
 import datetime
 import calendar
@@ -21,15 +24,16 @@ import calendar
 
 class Calendar(object):
     def __init__(self):
+        self.current_month = datetime.date.month()
         self.current_date = datetime.date.today()
         self.events = {} # title as the keys, and the values as the dates
 
-    def add_event(self, event_id, title, start_time, end_time, description, is_recurring, date):
+    def add_event(self, event_id, title, date, start_time, end_time, description, is_recurring):
         # create an Event object
-        new_event = Event(event_id, title, start_time, end_time, description, is_recurring)
+        new_event = Event(event_id, title, date, start_time, end_time, description, is_recurring)
 
         # store it in events dictionary
-        self.events[new_event.title] = date
+        self.events[new_event.event_id] = date #changed dictionary key to event id
 
 
     def get_event(self, title):
@@ -125,9 +129,12 @@ class MonthViewGUI():
                 row += 1
 
 class Event(object):
-    def __init__(self, event_id, title, start_time, end_time, description, is_recurring):
+    def __init__(self, event_id:str, title:str, date:str, start_day, end_day, start_time:str, end_time:str, description:str, is_recurring:bool):
         self.event_id = event_id
         self.title = title
+        self.date = date # Added the date attribute
+        self.start_day: start_day #Added start day
+        self.end_time: end_day #Added end day
         self.start_time = start_time
         self.end_time = end_time
         self.description = description
