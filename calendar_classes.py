@@ -134,7 +134,7 @@ class Event(object):
         self.title = title
         self.date = date # Added the date attribute
         self.start_day: start_day #Added start day
-        self.end_time: end_day #Added end day
+        self.end_day: end_day #Added end day
         self.start_time = start_time
         self.end_time = end_time
         self.description = description

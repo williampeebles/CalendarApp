@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Added event class and added to the calendar class">
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Updated todo list, added some attributes to the event class, changed the keys in the dictionary to event_id">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -125,7 +125,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758945308742</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Updated todo list and added some attributes to the event class">
+      <option name="closed" value="true" />
+      <created>1759338363085</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1759338363085</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Updated todo list, added some attributes to the event class, changed the keys in the dictionary to event_id">
+      <option name="closed" value="true" />
+      <created>1759338553956</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1759338553956</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -142,6 +158,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Project creation" />
     <MESSAGE value="Added event class and added to the calendar class" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added event class and added to the calendar class" />
+    <MESSAGE value="Updated todo list and added some attributes to the event class" />
+    <MESSAGE value="Updated todo list, added some attributes to the event class, changed the keys in the dictionary to event_id" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated todo list, added some attributes to the event class, changed the keys in the dictionary to event_id" />
   </component>
 </project>
