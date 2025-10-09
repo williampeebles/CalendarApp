@@ -1,16 +1,12 @@
 """
 To Include/Think about
-
-- Let user choose what month it is
-- Specify what a whole month is - Done
-- The object should include a list of events
-- Click on day then display a list of events
-- Buttons for calendar days
-- Start day, end Day
-- Use calendar class to store data
+- Let user choose what month it is,
+(May implement later, allowing user to see months up to 6-months).
 
 TODOList
-Fix the adding events to a day.
+Fix the adding events to a day.(Args error)
+Character limit on description
+Show event on calendar
 """
 
 import tkinter as tk
