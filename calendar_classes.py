@@ -4,15 +4,16 @@ To Include/Think about
 (May implement later, allowing user to see months up to 6-months).
 
 TODOList
-Fix the adding events to a day.(Args error)
-Character limit on description
-Show event on calendar
+Fix the adding events to a day.(Args error) -fixed
+Character limit on description 
+Show event on calendar - fixed
 """
 
 import tkinter as tk
 import datetime
 import calendar
 import random
+import tkinter.messagebox as messagebox
 
 
 class Calendar(object):
@@ -93,34 +94,54 @@ class Calendar(object):
         event_ids = self.events_by_date.get(date_str, [])
         return [self.events[event_id] for event_id in event_ids if event_id in self.events]
 
-    def update_event(self, date, event_id, new_title=None, new_start=None, new_end=None, new_desc=None,
-                     new_recurring=None):
+    def update_event(self, event_id, new_title=None, new_start=None, new_end=None, new_desc=None, new_recurring=None, new_recurrence_pattern=None, new_date=None, new_start_day=None, new_end_day=None):
         """
         Update an existing event's properties.
-        Finds an event by date and event_id, then updates any provided properties.
-        Only non-None parameters will be updated.
+
         Args:
-            date (str): The date of the event to update
             event_id (str): The unique identifier of the event
             new_title (str, optional): New title for the event
             new_start (str, optional): New start time for the event
             new_end (str, optional): New end time for the event
             new_desc (str, optional): New description for the event
             new_recurring (bool, optional): New recurring status for the event
+            new_recurrence_pattern (str, optional): New recurrence pattern for the event
+            new_date (str, optional): New date for the event in YYYY-MM-DD format
+            new_start_day (str, optional): New start day in YYYY-MM-DD format
+            new_end_day (str, optional): New end day in YYYY-MM-DD format
+        Returns:
+            bool: True if event updated, False if event not found
         """
-        if date in self.events:
-            for event in self.events[date]:
-                if event.event_id == event_id:
-                    if new_title is not None:
-                        event.title = new_title
-                    if new_start is not None:
-                        event.start_time = new_start
-                    if new_end is not None:
-                        event.end_time = new_end
-                    if new_desc is not None:
-                        event.description = new_desc
-                    if new_recurring is not None:
-                        event.is_recurring = new_recurring
+        if event_id in self.events:
+            event = self.events[event_id]
+            if new_title is not None:
+                event.title = new_title
+            if new_start is not None:
+                event.start_time = new_start
+            if new_end is not None:
+                event.end_time = new_end
+            if new_desc is not None:
+                event.description = new_desc
+            if new_recurring is not None:
+                event.is_recurring = new_recurring
+            if new_recurrence_pattern is not None:
+                event.recurrence_pattern = new_recurrence_pattern
+            if new_date is not None and new_date != event.date:
+                old_date = event.date
+                event.date = new_date
+                if old_date in self.events_by_date and event_id in self.events_by_date[old_date]:
+                    self.events_by_date[old_date].remove(event_id)
+                    if not self.events_by_date[old_date]:
+                        del self.events_by_date[old_date]
+                if new_date not in self.events_by_date:
+                    self.events_by_date[new_date] = []
+                self.events_by_date[new_date].append(event_id)
+            if new_start_day is not None:
+                event.start_day = new_start_day
+            if new_end_day is not None:
+                event.end_day = new_end_day
+            return True
+        return False
 
     def delete_event(self, event_id):
         """
@@ -237,13 +258,11 @@ class MonthViewGUI():
                 DayViewGUI(self.calendar, year, month, day)
             else:
                 # Show warning for past dates
-                import tkinter.messagebox as messagebox
                 messagebox.showwarning(
                     "Invalid Date",
                     "Cannot view or edit events for past dates."
                 )
         except Exception as e:
-            import tkinter.messagebox as messagebox
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
     def show_month(self, year, month):
@@ -291,7 +310,9 @@ class MonthViewGUI():
                         fg = "red"
                     else:
                         fg = "black"
-
+                    # Determine background color based on event existence
+                    date_str = f"{year}-{month:02d}-{day_num:02d}"
+                    bg_color = "yellow" if date_str in self.calendar.events_by_date else None
                     # Create clickable day button
                     day_button = tk.Button(
                         self.frame,
@@ -300,7 +321,8 @@ class MonthViewGUI():
                         width=15,
                         height=7,
                         fg=fg,
-                        command=lambda d=day_num, m=month, y=year: self.on_day_click(y, m, d)
+                        bg=bg_color,
+                        command=lambda y=year, m=month, d=day_num: self.on_day_click(y, m, d)
                     )
                     day_button.grid(row=row, column=col)
                     day_num += 1
@@ -331,7 +353,7 @@ class Event(object):
         is_recurring (bool): Whether the event repeats regularly
         recurrence_pattern (str): How often the event repeats (daily, weekly, monthly, yearly)
     """
-    def __init__(self, event_id:str, title:str, date:str, start_day, end_day, start_time:str, end_time:str, description:str, is_recurring:bool):
+    def __init__(self, event_id:str, title:str, date:str, start_day, end_day, start_time:str, end_time:str, description:str, is_recurring:bool, recurrence_pattern=None):
         """
         Initialize an Event object with all necessary properties.
         Args:
@@ -348,13 +370,14 @@ class Event(object):
         """
         self.event_id = event_id
         self.title = title
-        self.date = date # Added the date attribute
-        self.start_day = start_day #Added start day
-        self.end_day = end_day #Added end day
+        self.date = date
+        self.start_day = start_day
+        self.end_day = end_day
         self.start_time = start_time
         self.end_time = end_time
         self.description = description
         self.is_recurring = is_recurring
+        self.recurrence_pattern = recurrence_pattern
 
 
 class DayViewGUI():
@@ -660,19 +683,38 @@ class DayViewGUI():
                 tk.messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD format.")
                 return
 
-            # Generate unique event ID using random integer
-            event_id = str(random.randint(1000, 1100))
+            if title_text and start_date and end_date and start_time and end_time:
+                # Update existing event
+                if event_index is not None:
+                    selected_event = self.current_events[event_index]
 
-            # Add event to calendar
-            self.calendar.add_event(
-                event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
-                start_date, end_date, start_time, end_time, description,
-                is_recurring, recurrence_pattern
-            )
+                    # Update event in calendar
+                    self.calendar.update_event(
+                        selected_event.event_id,
+                        new_title=title_text,
+                        new_start=start_time,
+                        new_end=end_time,
+                        new_desc=description,
+                        new_recurring=is_recurring,
+                        new_recurrence_pattern=recurrence_pattern,
+                        new_date=start_date,  # Use start_date as the new date
+                        new_start_day=start_date,  # Assuming start_day is the same as start_date
+                        new_end_day=end_date  # Assuming end_day is the same as end_date
+                    )
+                else:
+                    # New event, generate unique ID
+                    event_id = str(random.randint(1000, 1100))
 
-            # Refresh the events list and close dialog
-            self.refresh_events_list()
-            dialog.destroy()
+                    # Add event to calendar
+                    self.calendar.add_event(
+                        event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
+                        start_date, end_date, start_time, end_time, description,
+                        is_recurring, recurrence_pattern
+                    )
+
+                # Refresh the events list and close dialog
+                self.refresh_events_list()
+                dialog.destroy()
 
         save_btn = tk.Button(
             button_frame,
