@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="updated month gui view&#10;can now edit, and delete event" />
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="updated month gui view&#10;can now edit, and delete event">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/calendar_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/calendar_classes.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -179,7 +182,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760537657254</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="updated month gui view&#10;can now edit, and delete event">
+      <option name="closed" value="true" />
+      <created>1760543266731</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1760543266732</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

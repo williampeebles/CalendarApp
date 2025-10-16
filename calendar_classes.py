@@ -4,9 +4,10 @@ To Include/Think about
 (May implement later, allowing user to see months up to 6-months).
 
 TODOList
-Fix the adding events to a day.(Args error) -fixed
-Character limit on description 
-Show event on calendar - fixed
+-Character limit on description
+-When creating an event, if user selects a start day that is after the current date,
+then that event should be applied to that selected day
+-database
 """
 
 import tkinter as tk
@@ -14,6 +15,7 @@ import datetime
 import calendar
 import random
 import tkinter.messagebox as messagebox
+from tkcalendar import DateEntry
 
 
 class Calendar(object):
@@ -218,6 +220,21 @@ class MonthViewGUI():
         self.show_month(self.current_year, self.current_month)
         self.window.mainloop()
 
+    def refresh_calendar_display(self):
+        """
+        Refresh the calendar display to show updated event highlighting.
+        This method is called when events are added, modified, or deleted
+        to ensure the calendar buttons reflect the current state of events.
+        """
+        if self.showing_next:
+            if self.current_month < 12:
+                year, month = self.current_year, self.current_month + 1
+            else:
+                year, month = self.current_year + 1, 1
+        else:
+            year, month = self.current_year, self.current_month
+        self.show_month(year, month)
+
     def switch_month(self):
         """
         Toggle between current month and next month display.
@@ -255,7 +272,7 @@ class MonthViewGUI():
             # Check if the date is current or future
             if clicked_date >= datetime.date.today():
                 # Open day view for valid dates
-                DayViewGUI(self.calendar, year, month, day)
+                DayViewGUI(self.calendar, year, month, day, parent_gui=self)
             else:
                 # Show warning for past dates
                 messagebox.showwarning(
@@ -395,7 +412,7 @@ class DayViewGUI():
         events_listbox (tk.Listbox): Listbox displaying events for the day
     """
 
-    def __init__(self, calendar_obj, year, month, day):
+    def __init__(self, calendar_obj, year, month, day, parent_gui=None):
         """
         Initialize the DayViewGUI for a specific date.
 
@@ -404,9 +421,11 @@ class DayViewGUI():
             year (int): Year of the selected date
             month (int): Month of the selected date
             day (int): Day of the selected date
+            parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
         self.calendar = calendar_obj
         self.selected_date = datetime.date(year, month, day)
+        self.parent_gui = parent_gui
 
         # Check if the date is valid (current or future)
         if self.selected_date < datetime.date.today():
@@ -577,15 +596,21 @@ class DayViewGUI():
 
         # Start Date field
         tk.Label(fields_frame, text="Start Date:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w", pady=5)
-        start_date_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
+        start_date_entry = DateEntry(fields_frame, font=("Arial", 10), width=12,
+                                   background='darkblue', foreground='white',
+                                   borderwidth=2, date_pattern='yyyy-mm-dd',
+                                   mindate=datetime.date.today())
         start_date_entry.grid(row=1, column=1, pady=5, padx=5, sticky="w")
-        start_date_entry.insert(0, self.selected_date.strftime("%Y-%m-%d"))
+        start_date_entry.set_date(self.selected_date)
 
         # End Date field
         tk.Label(fields_frame, text="End Date:", font=("Arial", 10, "bold")).grid(row=2, column=0, sticky="w", pady=5)
-        end_date_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
+        end_date_entry = DateEntry(fields_frame, font=("Arial", 10), width=12,
+                                 background='darkblue', foreground='white',
+                                 borderwidth=2, date_pattern='yyyy-mm-dd',
+                                 mindate=datetime.date.today())
         end_date_entry.grid(row=2, column=1, pady=5, padx=5, sticky="w")
-        end_date_entry.insert(0, self.selected_date.strftime("%Y-%m-%d"))
+        end_date_entry.set_date(self.selected_date)
 
         # Start time field
         tk.Label(fields_frame, text="Start Time:", font=("Arial", 10, "bold")).grid(row=3, column=0, sticky="w", pady=5)
@@ -642,6 +667,34 @@ class DayViewGUI():
                 font=("Arial", 9)
             ).grid(row=1, column=i, sticky="w", padx=5, pady=2)
 
+        # Populate form with existing event data if editing
+        if event_index is not None and self.current_events:
+            existing_event = self.current_events[event_index]
+            title_entry.insert(0, existing_event.title)
+
+            # Parse and set start/end dates
+            try:
+                start_date_obj = datetime.datetime.strptime(existing_event.start_day, "%Y-%m-%d").date()
+                end_date_obj = datetime.datetime.strptime(existing_event.end_day, "%Y-%m-%d").date()
+                start_date_entry.set_date(start_date_obj)
+                end_date_entry.set_date(end_date_obj)
+            except ValueError:
+                # Fallback to selected date if parsing fails
+                pass
+
+            start_time_entry.delete(0, tk.END)
+            start_time_entry.insert(0, existing_event.start_time)
+
+            end_time_entry.delete(0, tk.END)
+            end_time_entry.insert(0, existing_event.end_time)
+
+            description_text.insert("1.0", existing_event.description)
+
+            recurring_var.set(existing_event.is_recurring)
+            if existing_event.is_recurring and existing_event.recurrence_pattern:
+                recurrence_var.set(existing_event.recurrence_pattern)
+                self.toggle_recurrence_options(True, recurrence_frame)
+
         # Buttons
         button_frame = tk.Frame(dialog)
         button_frame.pack(fill="x", padx=20, pady=10)
@@ -649,8 +702,8 @@ class DayViewGUI():
         def save_event():
             """Save the event (add new or update existing)."""
             title_text = title_entry.get().strip()
-            start_date = start_date_entry.get().strip()
-            end_date = end_date_entry.get().strip()
+            start_date_obj = start_date_entry.get_date()
+            end_date_obj = end_date_entry.get_date()
             start_time = start_time_entry.get().strip()
             end_time = end_time_entry.get().strip()
             description = description_text.get("1.0", tk.END).strip()
@@ -662,22 +715,19 @@ class DayViewGUI():
                 tk.messagebox.showerror("Error", "Event title is required.")
                 return
 
-            if not start_date or not end_date:
-                tk.messagebox.showerror("Error", "Start and end dates are required.")
-                return
-
             if not start_time or not end_time:
                 tk.messagebox.showerror("Error", "Start and end times are required.")
                 return
 
-            # Validate date format
+            # Validate dates
             try:
-                start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-                end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
-
                 if end_date_obj < start_date_obj:
                     tk.messagebox.showerror("Error", "End date cannot be before start date.")
                     return
+
+                # Convert date objects to strings for storage
+                start_date = start_date_obj.strftime("%Y-%m-%d")
+                end_date = end_date_obj.strftime("%Y-%m-%d")
 
             except ValueError:
                 tk.messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD format.")
@@ -714,6 +764,9 @@ class DayViewGUI():
 
                 # Refresh the events list and close dialog
                 self.refresh_events_list()
+                # Refresh the parent calendar display if available
+                if self.parent_gui:
+                    self.parent_gui.refresh_calendar_display()
                 dialog.destroy()
 
         save_btn = tk.Button(
@@ -761,6 +814,9 @@ class DayViewGUI():
 
             if success:
                 self.refresh_events_list()
+                # Refresh the parent calendar display if available
+                if self.parent_gui:
+                    self.parent_gui.refresh_calendar_display()
                 tk.messagebox.showinfo("Success", "Event deleted successfully.")
             else:
                 tk.messagebox.showerror("Error", "Failed to delete event.")
