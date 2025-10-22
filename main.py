@@ -1,0 +1,18 @@
+
+"""
+To Include/Think about
+- Let user choose what month it is,
+(May implement later, allowing user to see months up to 6-months).
+*******************************************************************************
+TODOList
+- Character limit on description
+-When creating an event, if user selects a start day that is after the current date,
+then that event should be applied to that selected day
+-database
+"""
+from Calendar_Class import Calendar
+from MonthViewGUI_Class import MonthViewGUI
+
+# Create a calendar instance and start the GUI
+calendar_app = Calendar()
+MonthViewGUI(calendar_app)
