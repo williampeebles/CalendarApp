@@ -1,6 +1,5 @@
 import tkinter as tk
 import datetime
-import random
 import tkinter.messagebox as messagebox
 from tkcalendar import DateEntry
 
@@ -411,10 +410,14 @@ class DayViewGUI():
                         new_all_day=is_all_day
                     )
                 else:
-                    # New event, generate unique ID
-                    event_id = str(random.randint(1000, 1100))
+                    # New event, generate unique ID using the calendar's method
+                    try:
+                        event_id = self.calendar.calendar.generate_event_id()
+                    except Exception as e:
+                        tk.messagebox.showerror("Error", str(e))
+                        return
 
-                    # Add event to calendar
+                    # Add event to calendar - this will automatically save to database if using MonthCalendar
                     self.calendar.add_event(
                         event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
                         start_date, end_date, start_time, end_time, description,

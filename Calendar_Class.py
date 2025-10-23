@@ -24,6 +24,22 @@ class Calendar(object):
         self.current_date = datetime.date.today()
         self.events = {}  # Dictionary: {event_id: Event_object}
         self.events_by_date = {}  # Dictionary: {date_string: [event_ids]}
+        self.next_event_id = 1  # Counter for sequential event IDs
+
+    def generate_event_id(self):
+        """
+        Generate a sequential event ID from 001 to 100.
+        Returns:
+            str: Event ID in format '001', '002', etc.
+        Raises:
+            Exception: If all 100 IDs are used
+        """
+        if self.next_event_id > 100:
+            raise Exception("Maximum number of events (100) reached")
+        
+        event_id = f"{self.next_event_id:03d}"
+        self.next_event_id += 1
+        return event_id
 
     def add_event(self, event_id, title, date, start_day, end_day, start_time, end_time, description, is_recurring,
                   recurrence_pattern=None, is_all_day=False):

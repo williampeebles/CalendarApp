@@ -60,6 +60,7 @@ class CalendarDatabase:
                 calendar_id INTEGER,
                 event_id TEXT NOT NULL,
                 title TEXT NOT NULL,
+                description TEXT,
                 date TEXT NOT NULL,
                 start_day TEXT,
                 end_day TEXT,
@@ -118,27 +119,30 @@ class CalendarDatabase:
     def _save_events_for_calendar(self, cursor, calendar_id, month_calendar):
         """
         Save individual events for a calendar to the events table.
+        Only saves events that don't already exist to prevent duplicates.
 
         Args:
             cursor: Database cursor
             calendar_id (int): ID of the calendar in the database
             month_calendar: MonthCalendar object containing events
         """
-        # Clear existing events for this calendar
-        cursor.execute('DELETE FROM events WHERE calendar_id = ?', (calendar_id,))
+        # Get existing event IDs for this calendar
+        cursor.execute('SELECT event_id FROM events WHERE calendar_id = ?', (calendar_id,))
+        existing_event_ids = {row[0] for row in cursor.fetchall()}
 
-        # Insert all events
+        # Insert only new events
         for event_id, event in month_calendar.calendar.events.items():
-            cursor.execute('''
-                INSERT INTO events 
-                (calendar_id, event_id, title, description, date, start_day, end_day,
-                 start_time, end_time, is_all_day, is_recurring, recurrence_pattern)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                calendar_id, event_id, event.title, event.description, event.date,
-                event.start_day, event.end_day, event.start_time, event.end_time,
-                event.is_all_day, event.is_recurring, event.recurrence_pattern
-            ))
+            if event_id not in existing_event_ids:
+                cursor.execute('''
+                    INSERT INTO events 
+                    (calendar_id, event_id, title, description, date, start_day, end_day,
+                     start_time, end_time, is_all_day, recurrence_pattern)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    calendar_id, event_id, event.title, event.description, event.date,
+                    event.start_day, event.end_day, event.start_time, event.end_time,
+                    event.is_all_day, event.recurrence_pattern
+                ))
 
     def load_month_calendar(self, year, month):
         """
@@ -169,7 +173,7 @@ class CalendarDatabase:
         # Get all events for this calendar
         cursor.execute('''
             SELECT event_id, title, description, date, start_day, end_day,
-                   start_time, end_time, is_all_day, is_recurring, recurrence_pattern
+                   start_time, end_time, is_all_day, recurrence_pattern
             FROM events WHERE calendar_id = ?
         ''', (calendar_id,))
 
@@ -181,7 +185,7 @@ class CalendarDatabase:
         events_by_date = {}
 
         for event_data in events_data:
-            event_id, title, description, date, start_day, end_day, start_time, end_time, is_all_day, is_recurring, recurrence_pattern = event_data
+            event_id, title, description, date, start_day, end_day, start_time, end_time, is_all_day, recurrence_pattern = event_data
 
             # Create a simple event object (dict) with the data
             event_dict = {
@@ -194,7 +198,7 @@ class CalendarDatabase:
                 'start_time': start_time,
                 'end_time': end_time,
                 'is_all_day': bool(is_all_day),
-                'is_recurring': bool(is_recurring),
+                'is_recurring': bool(recurrence_pattern is not None and recurrence_pattern.strip()),
                 'recurrence_pattern': recurrence_pattern
             }
 
@@ -230,6 +234,84 @@ class CalendarDatabase:
         conn.close()
 
         return results
+
+    def save_single_event(self, calendar_id, event):
+        """
+        Save a single event to the database.
+        
+        Args:
+            calendar_id (int): ID of the calendar in the database
+            event: Event object to save
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if event already exists
+        cursor.execute('SELECT id FROM events WHERE calendar_id = ? AND event_id = ?', 
+                      (calendar_id, event.event_id))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing event
+            cursor.execute('''
+                UPDATE events SET
+                title = ?, description = ?, date = ?, start_day = ?, end_day = ?,
+                start_time = ?, end_time = ?, is_all_day = ?, recurrence_pattern = ?,
+                modified_date = CURRENT_TIMESTAMP
+                WHERE calendar_id = ? AND event_id = ?
+            ''', (
+                event.title, event.description, event.date, event.start_day, event.end_day,
+                event.start_time, event.end_time, event.is_all_day, event.recurrence_pattern,
+                calendar_id, event.event_id
+            ))
+        else:
+            # Insert new event
+            cursor.execute('''
+                INSERT INTO events 
+                (calendar_id, event_id, title, description, date, start_day, end_day,
+                 start_time, end_time, is_all_day, recurrence_pattern)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                calendar_id, event.event_id, event.title, event.description, event.date,
+                event.start_day, event.end_day, event.start_time, event.end_time,
+                event.is_all_day, event.recurrence_pattern
+            ))
+        
+        conn.commit()
+        conn.close()
+
+    def delete_single_event(self, calendar_id, event_id):
+        """
+        Delete a single event from the database.
+        
+        Args:
+            calendar_id (int): ID of the calendar in the database
+            event_id (str): ID of the event to delete
+            
+        Returns:
+            bool: True if deleted, False if not found
+        """
+        print(f"DEBUG: delete_single_event called with calendar_id={calendar_id}, event_id={event_id}")
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # First check if the event exists
+        cursor.execute('SELECT * FROM events WHERE calendar_id = ? AND event_id = ?', 
+                      (calendar_id, event_id))
+        existing = cursor.fetchone()
+        print(f"DEBUG: Found existing event: {existing}")
+        
+        cursor.execute('DELETE FROM events WHERE calendar_id = ? AND event_id = ?', 
+                      (calendar_id, event_id))
+        
+        deleted = cursor.rowcount > 0
+        print(f"DEBUG: Deletion affected {cursor.rowcount} rows")
+        
+        conn.commit()
+        conn.close()
+        
+        return deleted
 
     def delete_month_calendar(self, year, month):
         """
