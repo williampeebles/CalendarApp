@@ -36,7 +36,7 @@ class Calendar(object):
         """
         if self.next_event_id > 100:
             raise Exception("Maximum number of events (100) reached")
-        
+
         event_id = f"{self.next_event_id:03d}"
         self.next_event_id += 1
         return event_id
@@ -97,7 +97,9 @@ class Calendar(object):
         event_ids = self.events_by_date.get(date_str, [])
         return [self.events[event_id] for event_id in event_ids if event_id in self.events]
 
-    def update_event(self, event_id, new_title=None, new_start=None, new_end=None, new_desc=None, new_recurring=None, new_recurrence_pattern=None, new_date=None, new_start_day=None, new_end_day=None, new_all_day=None):
+    def update_event(self, event_id, new_title=None, new_start=None, new_end=None, new_desc=None, new_recurring=None,
+                     new_recurrence_pattern=None, new_date=None, new_start_day=None, new_end_day=None,
+                     new_all_day=None):
         """
         Update an existing event's properties.
 

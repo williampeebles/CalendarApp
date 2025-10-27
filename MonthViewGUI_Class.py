@@ -4,6 +4,7 @@ import calendar
 import tkinter.messagebox as messagebox
 import Calendar_Class
 import DayViewGUI_Class
+import WeekViewGUI_Class
 import Calendar_Database_Class
 
 
@@ -58,7 +59,7 @@ class MonthCalendar:
                     self.calendar.events[event_id] = event_obj
 
                 self.calendar.events_by_date = calendar_data.get('events_by_date', {})
-                
+
                 # Update the next_event_id counter based on existing events
                 if self.calendar.events:
                     # Find the highest numeric event ID and set next_event_id accordingly
@@ -71,7 +72,7 @@ class MonthCalendar:
                             # Skip non-numeric event IDs
                             pass
                     self.calendar.next_event_id = max_id + 1
-                
+
                 print(f"Loaded calendar data for {self.get_calendar_key()}")
         except Exception as e:
             print(f"Error loading calendar data: {e}")
@@ -138,21 +139,21 @@ class MonthCalendar:
     def delete_event(self, *args, **kwargs):
         """Delegate event deletion to the underlying calendar and remove from database."""
         print(f"DEBUG: delete_event called with args={args}, kwargs={kwargs}")
-        
+
         # First delete from the calendar
         result = self.calendar.delete_event(*args, **kwargs)
         print(f"DEBUG: Calendar deletion result: {result}")
-        
+
         # Only delete from database if calendar deletion was successful
         if result and args:  # If deletion succeeded and we have an event_id
             event_id = args[0]  # First argument is event_id
             print(f"DEBUG: Attempting to delete event_id {event_id} from database")
-            
+
             if self.db_manager:
                 try:
                     calendar_id = self._ensure_calendar_in_database()
                     print(f"DEBUG: Got calendar_id: {calendar_id}")
-                    
+
                     if calendar_id:
                         db_deleted = self.db_manager.delete_single_event(calendar_id, event_id)
                         print(f"DEBUG: Database deletion result: {db_deleted}")
@@ -170,7 +171,7 @@ class MonthCalendar:
                 print("DEBUG: No db_manager available")
         else:
             print(f"DEBUG: Not deleting from database - result={result}, args={args}")
-        
+
         return result
 
     def _get_calendar_id(self):
@@ -178,49 +179,49 @@ class MonthCalendar:
         if not self.db_manager:
             print("DEBUG: No db_manager in _get_calendar_id")
             return None
-        
+
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         month_key = self.get_calendar_key()
         print(f"DEBUG: Looking for calendar with month_key: {month_key}")
         cursor.execute('SELECT id FROM month_calendars WHERE month_key = ?', (month_key,))
         result = cursor.fetchone()
         print(f"DEBUG: Calendar query result: {result}")
-        
+
         conn.close()
-        
+
         return result[0] if result else None
 
     def _ensure_calendar_in_database(self):
         """Ensure the month calendar exists in database and return its ID."""
         if not self.db_manager:
             return None
-        
+
         # First try to get existing ID
         calendar_id = self._get_calendar_id()
-        
+
         if calendar_id is None:
             # Calendar doesn't exist, create it
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            
+
             month_key = self.get_calendar_key()
             cursor.execute('''
                 INSERT OR REPLACE INTO month_calendars 
                 (month_key, year, month, modified_date)
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
             ''', (month_key, self.year, self.month))
-            
+
             # Get the ID of the created calendar
             cursor.execute('SELECT id FROM month_calendars WHERE month_key = ?', (month_key,))
             calendar_id = cursor.fetchone()[0]
-            
+
             conn.commit()
             conn.close()
-            
+
             print(f"DEBUG: Created new calendar in database with ID: {calendar_id}")
-        
+
         return calendar_id
 
     @property
@@ -272,11 +273,19 @@ class MonthViewGUI():
         # Initialize the current month calendar
         self.current_calendar = self._get_month_calendar(self.current_year, self.current_month)
 
-        self.header = tk.Label(self.window, font=("Arial", 16, "bold"))
-        self.header.grid(row=0, column=0, columnspan=7)
+        # Create header frame to position title and week button
+        header_frame = tk.Frame(self.window)
+        header_frame.grid(row=0, column=0, columnspan=7, sticky="ew", pady=5)
+        header_frame.columnconfigure(1, weight=1)  # Make middle column expand
+
+        self.week_btn = tk.Button(header_frame, text="Week", command=self.open_week_view, font=("Arial", 10))
+        self.week_btn.grid(row=0, column=2, sticky="e", padx=10)
+
+        self.header = tk.Label(header_frame, font=("Arial", 16, "bold"))
+        self.header.grid(row=0, column=1)
 
         self.switch_btn = tk.Button(self.window, text="Show Next Month", command=self.switch_month)
-        self.switch_btn.grid(row=1, column=0, columnspan=7)
+        self.switch_btn.grid(row=1, column=0, columnspan=7, pady=5)
 
         self.frame = tk.Frame(self.window)
         self.frame.grid(row=2, column=0, columnspan=7)
@@ -359,6 +368,21 @@ class MonthViewGUI():
         # Update the current calendar reference
         self.current_calendar = self._get_month_calendar(year, month)
         self.show_month(year, month)
+
+    def open_week_view(self):
+        """
+        Open the week view for the current date.
+        Creates a WeekViewGUI window showing the week containing today's date.
+        """
+        try:
+            # Use today's date to open the week view
+            today = datetime.date.today()
+            # Get the calendar for today's month
+            today_calendar = self._get_month_calendar(today.year, today.month)
+            # Open week view
+            WeekViewGUI_Class.WeekViewGUI(today_calendar, today.year, today.month, today.day, parent_gui=self)
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred opening week view: {str(e)}")
 
     def on_day_click(self, year, month, day):
         """
@@ -453,6 +477,9 @@ class MonthViewGUI():
                         bg=bg_color,
                         command=lambda y=year, m=month, d=day_num: self.on_day_click(y, m, d)
                     )
+                    # Add right-click context menu for week view option
+                    day_button.bind("<Button-3>",
+                                    lambda e, y=year, m=month, d=day_num: self.show_context_menu(e, y, m, d))
                     day_button.grid(row=row, column=col)
                     day_num += 1
 

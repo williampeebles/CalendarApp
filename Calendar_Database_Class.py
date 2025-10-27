@@ -238,19 +238,19 @@ class CalendarDatabase:
     def save_single_event(self, calendar_id, event):
         """
         Save a single event to the database.
-        
+
         Args:
             calendar_id (int): ID of the calendar in the database
             event: Event object to save
         """
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         # Check if event already exists
-        cursor.execute('SELECT id FROM events WHERE calendar_id = ? AND event_id = ?', 
-                      (calendar_id, event.event_id))
+        cursor.execute('SELECT id FROM events WHERE calendar_id = ? AND event_id = ?',
+                       (calendar_id, event.event_id))
         existing = cursor.fetchone()
-        
+
         if existing:
             # Update existing event
             cursor.execute('''
@@ -276,41 +276,41 @@ class CalendarDatabase:
                 event.start_day, event.end_day, event.start_time, event.end_time,
                 event.is_all_day, event.recurrence_pattern
             ))
-        
+
         conn.commit()
         conn.close()
 
     def delete_single_event(self, calendar_id, event_id):
         """
         Delete a single event from the database.
-        
+
         Args:
             calendar_id (int): ID of the calendar in the database
             event_id (str): ID of the event to delete
-            
+
         Returns:
             bool: True if deleted, False if not found
         """
         print(f"DEBUG: delete_single_event called with calendar_id={calendar_id}, event_id={event_id}")
-        
+
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         # First check if the event exists
-        cursor.execute('SELECT * FROM events WHERE calendar_id = ? AND event_id = ?', 
-                      (calendar_id, event_id))
+        cursor.execute('SELECT * FROM events WHERE calendar_id = ? AND event_id = ?',
+                       (calendar_id, event_id))
         existing = cursor.fetchone()
         print(f"DEBUG: Found existing event: {existing}")
-        
-        cursor.execute('DELETE FROM events WHERE calendar_id = ? AND event_id = ?', 
-                      (calendar_id, event_id))
-        
+
+        cursor.execute('DELETE FROM events WHERE calendar_id = ? AND event_id = ?',
+                       (calendar_id, event_id))
+
         deleted = cursor.rowcount > 0
         print(f"DEBUG: Deletion affected {cursor.rowcount} rows")
-        
+
         conn.commit()
         conn.close()
-        
+
         return deleted
 
     def delete_month_calendar(self, year, month):

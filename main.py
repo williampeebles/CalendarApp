@@ -1,4 +1,3 @@
-
 """
 To Include/Think about
 - Let user choose what month it is,
@@ -8,7 +7,9 @@ TODOList
 - Character limit on description
 -When creating an event, if user selects a start day that is after the current date,
 then that event should be applied to that selected day
--database
+- Instead of opening a new window for switching to week view, just change the current window's view.
+-Add Agenda view
+
 """
 from Calendar_Class import Calendar
 from MonthViewGUI_Class import MonthViewGUI
