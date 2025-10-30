@@ -185,6 +185,27 @@ class DayViewGUI():
             title (str): Title of the dialog window
             event_index (int, optional): Index of event to edit (None for new event)
         """
+        dialog = self.create_form_dialog_window(title)
+        fields_frame, form_fields = self.create_form_fields(dialog)
+        recurrence_frame, recurrence_var = self.create_recurrence_options(fields_frame, form_fields['recurring_var'])
+        
+        # Populate form with existing event data if editing
+        if event_index is not None and self.current_events:
+            self.populate_form_for_editing(event_index, form_fields, recurrence_var, recurrence_frame)
+        
+        # Create buttons
+        self.create_form_buttons(dialog, form_fields, recurrence_var, event_index)
+
+    def create_form_dialog_window(self, title):
+        """
+        Create and configure the dialog window.
+        
+        Args:
+            title (str): Title of the dialog window
+            
+        Returns:
+            tk.Toplevel: The configured dialog window
+        """
         dialog = tk.Toplevel(self.window)
         dialog.title(title)
         dialog.geometry("500x600")
@@ -193,14 +214,25 @@ class DayViewGUI():
         # Make dialog modal
         dialog.transient(self.window)
         dialog.grab_set()
+        
+        return dialog
 
+    def create_form_fields(self, dialog):
+        """
+        Create all form input fields.
+        
+        Args:
+            dialog (tk.Toplevel): The dialog window
+            
+        Returns:
+            tuple: (fields_frame, form_fields_dict)
+        """
         # Event form fields
         fields_frame = tk.Frame(dialog)
         fields_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         # Title field
-        tk.Label(fields_frame, text="Event Title:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w",
-                                                                                     pady=5)
+        tk.Label(fields_frame, text="Event Title:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", pady=5)
         title_entry = tk.Entry(fields_frame, font=("Arial", 10), width=30)
         title_entry.grid(row=0, column=1, columnspan=2, pady=5, padx=5, sticky="w")
 
@@ -236,41 +268,49 @@ class DayViewGUI():
 
         # All day checkbox
         all_day_var = tk.BooleanVar()
-
-        def toggle_time_fields():
-            """Enable or disable time fields based on all-day status."""
-            if all_day_var.get():
-                start_time_entry.config(state='disabled')
-                end_time_entry.config(state='disabled')
-                start_time_entry.delete(0, tk.END)
-                start_time_entry.insert(0, "All Day")
-                end_time_entry.delete(0, tk.END)
-                end_time_entry.insert(0, "All Day")
-            else:
-                start_time_entry.config(state='normal')
-                end_time_entry.config(state='normal')
-                start_time_entry.delete(0, tk.END)
-                start_time_entry.insert(0, "09:00 AM")
-                end_time_entry.delete(0, tk.END)
-                end_time_entry.insert(0, "10:00 AM")
-
         all_day_check = tk.Checkbutton(
             fields_frame,
             text="All Day Event",
             variable=all_day_var,
             font=("Arial", 10),
-            command=toggle_time_fields
+            command=lambda: self.toggle_time_fields(all_day_var, start_time_entry, end_time_entry)
         )
         all_day_check.grid(row=5, column=1, sticky="w", pady=5)
 
         # Description field
-        tk.Label(fields_frame, text="Description:", font=("Arial", 10, "bold")).grid(row=6, column=0, sticky="nw",
-                                                                                     pady=5)
+        tk.Label(fields_frame, text="Description:", font=("Arial", 10, "bold")).grid(row=6, column=0, sticky="nw", pady=5)
         description_text = tk.Text(fields_frame, font=("Arial", 10), width=30, height=4)
         description_text.grid(row=6, column=1, columnspan=2, pady=5, padx=5, sticky="w")
 
         # Recurring checkbox
         recurring_var = tk.BooleanVar()
+        
+        # Store all form fields in a dictionary for easy access
+        form_fields = {
+            'title_entry': title_entry,
+            'start_date_entry': start_date_entry,
+            'end_date_entry': end_date_entry,
+            'start_time_entry': start_time_entry,
+            'end_time_entry': end_time_entry,
+            'all_day_var': all_day_var,
+            'description_text': description_text,
+            'recurring_var': recurring_var
+        }
+        
+        return fields_frame, form_fields
+
+    def create_recurrence_options(self, fields_frame, recurring_var):
+        """
+        Create the recurrence options section.
+        
+        Args:
+            fields_frame (tk.Frame): The main fields frame
+            recurring_var (tk.BooleanVar): The recurring checkbox variable
+            
+        Returns:
+            tuple: (recurrence_frame, recurrence_var)
+        """
+        # Recurring checkbox
         recurring_check = tk.Checkbutton(
             fields_frame,
             text="Recurring Event",
@@ -286,8 +326,7 @@ class DayViewGUI():
         recurrence_frame.grid_remove()  # Hide initially
 
         # Recurrence pattern selection
-        tk.Label(recurrence_frame, text="Repeat every:", font=("Arial", 9)).grid(row=0, column=0, sticky="w", padx=5,
-                                                                                 pady=2)
+        tk.Label(recurrence_frame, text="Repeat every:", font=("Arial", 9)).grid(row=0, column=0, sticky="w", padx=5, pady=2)
 
         recurrence_var = tk.StringVar(value="weekly")
         recurrence_options = [
@@ -305,136 +344,81 @@ class DayViewGUI():
                 value=value,
                 font=("Arial", 9)
             ).grid(row=1, column=i, sticky="w", padx=5, pady=2)
+            
+        return recurrence_frame, recurrence_var
 
-        # Populate form with existing event data if editing
-        if event_index is not None and self.current_events:
-            existing_event = self.current_events[event_index]
-            title_entry.insert(0, existing_event.title)
+    def populate_form_for_editing(self, event_index, form_fields, recurrence_var, recurrence_frame):
+        """
+        Populate form fields with existing event data for editing.
+        
+        Args:
+            event_index (int): Index of the event to edit
+            form_fields (dict): Dictionary containing all form field widgets
+            recurrence_var (tk.StringVar): Recurrence pattern variable
+            recurrence_frame (tk.LabelFrame): Recurrence options frame
+        """
+        existing_event = self.current_events[event_index]
+        
+        # Populate basic fields
+        form_fields['title_entry'].insert(0, existing_event.title)
 
-            # Parse and set start/end dates
-            try:
-                start_date_obj = datetime.datetime.strptime(existing_event.start_day, "%Y-%m-%d").date()
-                end_date_obj = datetime.datetime.strptime(existing_event.end_day, "%Y-%m-%d").date()
-                start_date_entry.set_date(start_date_obj)
-                end_date_entry.set_date(end_date_obj)
-            except ValueError:
-                # Fallback to selected date if parsing fails
-                pass
+        # Parse and set start/end dates
+        try:
+            start_date_obj = datetime.datetime.strptime(existing_event.start_day, "%Y-%m-%d").date()
+            end_date_obj = datetime.datetime.strptime(existing_event.end_day, "%Y-%m-%d").date()
+            form_fields['start_date_entry'].set_date(start_date_obj)
+            form_fields['end_date_entry'].set_date(end_date_obj)
+        except ValueError:
+            # Fallback to selected date if parsing fails
+            pass
 
-            # Set all-day status first
-            all_day_var.set(existing_event.is_all_day)
+        # Set all-day status first
+        form_fields['all_day_var'].set(existing_event.is_all_day)
 
-            if existing_event.is_all_day:
-                # For all-day events, disable time fields and show "All Day"
-                start_time_entry.config(state='disabled')
-                end_time_entry.config(state='disabled')
-                start_time_entry.delete(0, tk.END)
-                start_time_entry.insert(0, "All Day")
-                end_time_entry.delete(0, tk.END)
-                end_time_entry.insert(0, "All Day")
-            else:
-                # For timed events, set the actual times
-                start_time_entry.delete(0, tk.END)
-                start_time_entry.insert(0, existing_event.start_time)
-                end_time_entry.delete(0, tk.END)
-                end_time_entry.insert(0, existing_event.end_time)
+        if existing_event.is_all_day:
+            # For all-day events, disable time fields and show "All Day"
+            form_fields['start_time_entry'].config(state='disabled')
+            form_fields['end_time_entry'].config(state='disabled')
+            form_fields['start_time_entry'].delete(0, tk.END)
+            form_fields['start_time_entry'].insert(0, "All Day")
+            form_fields['end_time_entry'].delete(0, tk.END)
+            form_fields['end_time_entry'].insert(0, "All Day")
+        else:
+            # For timed events, set the actual times
+            form_fields['start_time_entry'].delete(0, tk.END)
+            form_fields['start_time_entry'].insert(0, existing_event.start_time)
+            form_fields['end_time_entry'].delete(0, tk.END)
+            form_fields['end_time_entry'].insert(0, existing_event.end_time)
 
-            description_text.insert("1.0", existing_event.description)
+        form_fields['description_text'].insert("1.0", existing_event.description)
 
-            recurring_var.set(existing_event.is_recurring)
-            if existing_event.is_recurring and existing_event.recurrence_pattern:
-                recurrence_var.set(existing_event.recurrence_pattern)
-                self.toggle_recurrence_options(True, recurrence_frame)
+        # Set recurrence options
+        form_fields['recurring_var'].set(existing_event.is_recurring)
+        if existing_event.is_recurring and existing_event.recurrence_pattern:
+            recurrence_var.set(existing_event.recurrence_pattern)
+            self.toggle_recurrence_options(True, recurrence_frame)
 
-        # Buttons
+    def create_form_buttons(self, dialog, form_fields, recurrence_var, event_index):
+        """
+        Create the save and cancel buttons for the form.
+        
+        Args:
+            dialog (tk.Toplevel): The dialog window
+            form_fields (dict): Dictionary containing all form field widgets
+            recurrence_var (tk.StringVar): Recurrence pattern variable
+            event_index (int, optional): Index of event to edit (None for new event)
+        """
         button_frame = tk.Frame(dialog)
         button_frame.pack(fill="x", padx=20, pady=10)
-
-        def save_event():
-            """Save the event (add new or update existing)."""
-            title_text = title_entry.get().strip()
-            start_date_obj = start_date_entry.get_date()
-            end_date_obj = end_date_entry.get_date()
-            start_time = start_time_entry.get().strip()
-            end_time = end_time_entry.get().strip()
-            description = description_text.get("1.0", tk.END).strip()
-            is_recurring = recurring_var.get()
-            is_all_day = all_day_var.get()
-            recurrence_pattern = recurrence_var.get() if is_recurring else None
-
-            # Validation
-            if not title_text:
-                tk.messagebox.showerror("Error", "Event title is required.")
-                return
-
-            # For all-day events, set standard times or skip time validation
-            if is_all_day:
-                start_time = "All Day"
-                end_time = "All Day"
-            else:
-                if not start_time or not end_time:
-                    tk.messagebox.showerror("Error", "Start and end times are required for timed events.")
-                    return
-
-            # Validate dates
-            try:
-                if end_date_obj < start_date_obj:
-                    tk.messagebox.showerror("Error", "End date cannot be before start date.")
-                    return
-
-                # Convert date objects to strings for storage
-                start_date = start_date_obj.strftime("%Y-%m-%d")
-                end_date = end_date_obj.strftime("%Y-%m-%d")
-
-            except ValueError:
-                tk.messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD format.")
-                return
-
-            if title_text and start_date and end_date:
-                # Update existing event
-                if event_index is not None:
-                    selected_event = self.current_events[event_index]
-
-                    # Update event in calendar
-                    self.calendar.update_event(
-                        selected_event.event_id,
-                        new_title=title_text,
-                        new_start=start_time,
-                        new_end=end_time,
-                        new_desc=description,
-                        new_recurring=is_recurring,
-                        new_recurrence_pattern=recurrence_pattern,
-                        new_date=start_date,  # Use start_date as the new date
-                        new_start_day=start_date,  # Assuming start_day is the same as start_date
-                        new_end_day=end_date,  # Assuming end_day is the same as end_date
-                        new_all_day=is_all_day
-                    )
-                else:
-                    # New event, generate unique ID using the calendar's method
-                    try:
-                        event_id = self.calendar.calendar.generate_event_id()
-                    except Exception as e:
-                        tk.messagebox.showerror("Error", str(e))
-                        return
-
-                    # Add event to calendar - this will automatically save to database if using MonthCalendar
-                    self.calendar.add_event(
-                        event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
-                        start_date, end_date, start_time, end_time, description,
-                        is_recurring, recurrence_pattern, is_all_day
-                    )
-
-                # Refresh the events list and close dialog
-                self.refresh_events_list()
-                # Refresh the parent calendar display if available
-                if self.parent_gui:
-                    self.parent_gui.refresh_calendar_display()
-                dialog.destroy()
 
         save_btn = tk.Button(
             button_frame,
             text="Save Event",
-            command=save_event,
+            command=lambda: self.save_event_data(
+                form_fields['title_entry'], form_fields['start_date_entry'], form_fields['end_date_entry'], 
+                form_fields['start_time_entry'], form_fields['end_time_entry'], form_fields['description_text'], 
+                form_fields['recurring_var'], form_fields['all_day_var'], recurrence_var, event_index, dialog
+            ),
             font=("Arial", 10),
             bg="lightgreen"
         )
@@ -447,6 +431,106 @@ class DayViewGUI():
             font=("Arial", 10)
         )
         cancel_btn.pack(side="right", padx=5)
+
+    def save_event_data(self, title_entry, start_date_entry, end_date_entry, start_time_entry, 
+                       end_time_entry, description_text, recurring_var, all_day_var, 
+                       recurrence_var, event_index, dialog):
+        """Save the event (add new or update existing)."""
+        title_text = title_entry.get().strip()
+        start_date_obj = start_date_entry.get_date()
+        end_date_obj = end_date_entry.get_date()
+        start_time = start_time_entry.get().strip()
+        end_time = end_time_entry.get().strip()
+        description = description_text.get("1.0", tk.END).strip()
+        is_recurring = recurring_var.get()
+        is_all_day = all_day_var.get()
+        recurrence_pattern = recurrence_var.get() if is_recurring else None
+
+        # Validation
+        if not title_text:
+            tk.messagebox.showerror("Error", "Event title is required.")
+            return
+
+        # For all-day events, set standard times or skip time validation
+        if is_all_day:
+            start_time = "All Day"
+            end_time = "All Day"
+        else:
+            if not start_time or not end_time:
+                tk.messagebox.showerror("Error", "Start and end times are required for timed events.")
+                return
+
+        # Validate dates
+        try:
+            if end_date_obj < start_date_obj:
+                tk.messagebox.showerror("Error", "End date cannot be before start date.")
+                return
+
+            # Convert date objects to strings for storage
+            start_date = start_date_obj.strftime("%Y-%m-%d")
+            end_date = end_date_obj.strftime("%Y-%m-%d")
+
+        except ValueError:
+            tk.messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD format.")
+            return
+
+        if title_text and start_date and end_date:
+            # Update existing event
+            if event_index is not None:
+                selected_event = self.current_events[event_index]
+
+                # Update event in calendar
+                self.calendar.update_event(
+                    selected_event.event_id,
+                    new_title=title_text,
+                    new_start=start_time,
+                    new_end=end_time,
+                    new_desc=description,
+                    new_recurring=is_recurring,
+                    new_recurrence_pattern=recurrence_pattern,
+                    new_date=start_date,  # Use start_date as the new date
+                    new_start_day=start_date,  # Assuming start_day is the same as start_date
+                    new_end_day=end_date,  # Assuming end_day is the same as end_date
+                    new_all_day=is_all_day
+                )
+            else:
+                # New event, generate unique ID using the calendar's method
+                try:
+                    event_id = self.calendar.calendar.generate_event_id()
+                except Exception as e:
+                    tk.messagebox.showerror("Error", str(e))
+                    return
+
+                # Add event to calendar - this will automatically save to database if using MonthCalendar
+                self.calendar.add_event(
+                    event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
+                    start_date, end_date, start_time, end_time, description,
+                    is_recurring, recurrence_pattern, is_all_day
+                )
+
+            # Refresh the events list and close dialog
+            self.refresh_events_list()
+            # Refresh the parent calendar display if available
+            if self.parent_gui:
+                self.parent_gui.refresh_calendar_display()
+            dialog.destroy()
+
+    def toggle_time_fields(self, all_day_var, start_time_entry, end_time_entry):
+        """Enable or disable time fields based on all-day status."""
+        if all_day_var.get():
+            start_time_entry.config(state='disabled')
+            end_time_entry.config(state='disabled')
+            start_time_entry.delete(0, tk.END)
+            start_time_entry.insert(0, "All Day")
+            end_time_entry.delete(0, tk.END)
+            end_time_entry.insert(0, "All Day")
+        else:
+            start_time_entry.config(state='normal')
+            end_time_entry.config(state='normal')
+            start_time_entry.delete(0, tk.END)
+            start_time_entry.insert(0, "09:00 AM")
+            end_time_entry.delete(0, tk.END)
+            end_time_entry.insert(0, "10:00 AM")
 
     def delete_event(self):
         """Delete the selected event after confirmation."""
