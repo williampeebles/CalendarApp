@@ -61,20 +61,25 @@ class MonthCalendar:
 
                 self.calendar.events_by_date = calendar_data.get('events_by_date', {})
 
-                # Update the next_event_id counter based on existing events
+                print(f"Loaded calendar data for {self.get_calendar_key()}")
+
+            # Always update the next_event_id counter based on ALL events in the database
+            # This ensures we don't reuse event IDs across different months
+            if self.db_manager:
+                max_id = self.db_manager.get_max_event_id()
+                self.calendar.next_event_id = max_id + 1
+                print(f"Set next_event_id to {self.calendar.next_event_id} based on global max ID {max_id}")
+            else:
+                # If no database manager, check local events only (fallback)
                 if self.calendar.events:
-                    # Find the highest numeric event ID and set next_event_id accordingly
                     max_id = 0
                     for event_id in self.calendar.events.keys():
                         try:
                             numeric_id = int(event_id)
                             max_id = max(max_id, numeric_id)
                         except ValueError:
-                            # Skip non-numeric event IDs
                             pass
                     self.calendar.next_event_id = max_id + 1
-
-                print(f"Loaded calendar data for {self.get_calendar_key()}")
         except Exception as e:
             print(f"Error loading calendar data: {e}")
 

@@ -338,6 +338,37 @@ class CalendarDatabase:
 
         return deleted
 
+    def get_max_event_id(self):
+        """
+        Get the highest numeric event ID across all calendars in the database.
+        
+        Returns:
+            int: The highest numeric event ID found, or 0 if no events exist
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get all event IDs from all calendars
+        cursor.execute('SELECT event_id FROM events')
+        event_ids = cursor.fetchall()
+        
+        conn.close()
+        
+        if not event_ids:
+            return 0
+            
+        max_id = 0
+        for (event_id,) in event_ids:
+            try:
+                # Convert event_id to integer (removing leading zeros)
+                numeric_id = int(event_id)
+                max_id = max(max_id, numeric_id)
+            except ValueError:
+                # Skip non-numeric event IDs
+                continue
+                
+        return max_id
+
     def close_connection(self, conn):
         """
         Close a database connection.
