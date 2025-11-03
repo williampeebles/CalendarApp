@@ -29,120 +29,178 @@ class DayViewGUI():
             day (int): Day of the selected date
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
+        # Store the calendar object so we can access events and modify them
         self.calendar = calendar_obj
+        
+        # Create a date object from the year, month, day numbers passed in
+        # This converts separate numbers (2024, 11, 15) into a single date object
         self.selected_date = datetime.date(year, month, day)
+        
+        # Keep reference to parent window so we can refresh it when events change
         self.parent_gui = parent_gui
 
         # Check if the date is valid (current or future)
+        # datetime.date.today() gets today's date for comparison
         if self.selected_date < datetime.date.today():
+            # Show a warning popup if user tries to view past dates
             tk.messagebox.showwarning("Invalid Date", "Cannot view or edit events for past dates.")
+            # Exit early - don't create the window if date is invalid
             return
 
+        # If date is valid, create and show the day view window
         self.create_day_view_window()
 
     def create_day_view_window(self):
         """Create and setup the day view window with all components."""
+        # Create a new popup window (Toplevel creates a separate window)
         self.window = tk.Toplevel()
+        
+        # Set the window title using date formatting
+        # strftime converts date to readable text like "Monday, November 02, 2025"
         self.window.title(f"Day View - {self.selected_date.strftime('%A, %B %d, %Y')}")
+        
+        # Set window size: 600 pixels wide, 500 pixels tall
         self.window.geometry("600x500")
+        
+        # Allow user to resize the window both horizontally and vertically
         self.window.resizable(True, True)
 
-        # Header
+        # Create header section at top of window
         header_frame = tk.Frame(self.window)
+        # pack() adds the frame to window, fill="x" makes it stretch horizontally
+        # padx/pady add spacing around the frame
         header_frame.pack(fill="x", padx=10, pady=5)
 
+        # Create a text label showing the date in large, bold font
         header_label = tk.Label(
             header_frame,
-            text=f"{self.selected_date.strftime('%A, %B %d, %Y')}",
-            font=("Arial", 18, "bold")
+            text=f"{self.selected_date.strftime('%A, %B %d, %Y')}",  # Format date as text
+            font=("Arial", 18, "bold")  # Set font family, size, and style
         )
+        # Add the label to the header frame
         header_label.pack()
 
-        # Events section
+        # Create a frame with border and title for the events section
+        # LabelFrame creates a box with a title at the top
         events_frame = tk.LabelFrame(self.window, text="Events for this Day", font=("Arial", 12, "bold"))
+        # fill="both" makes frame expand in all directions, expand=True allows it to grow
         events_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # Listbox with scrollbar for events
+        # Create container frame for the events list and scrollbar
         listbox_frame = tk.Frame(events_frame)
         listbox_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
+        # Create a vertical scrollbar for when there are many events
         scrollbar = tk.Scrollbar(listbox_frame)
+        # Pack on right side, fill="y" makes it stretch vertically
         scrollbar.pack(side="right", fill="y")
 
+        # Create the list box that will show all events for this day
         self.events_listbox = tk.Listbox(
             listbox_frame,
-            yscrollcommand=scrollbar.set,
+            yscrollcommand=scrollbar.set,  # Connect scrollbar to listbox
             font=("Arial", 10)
         )
+        # Pack on left side, fill and expand to take up remaining space
         self.events_listbox.pack(side="left", fill="both", expand=True)
+        
+        # Connect scrollbar to listbox so they work together
+        # When user moves scrollbar, it scrolls the listbox
         scrollbar.config(command=self.events_listbox.yview)
 
-        # Buttons frame
+        # Create a horizontal container for all the buttons at bottom of window
         buttons_frame = tk.Frame(self.window)
+        # fill="x" makes the frame stretch across the full width of window
         buttons_frame.pack(fill="x", padx=10, pady=5)
 
-        # Event management buttons
+        # Create "Add New Event" button with green background
         add_btn = tk.Button(
             buttons_frame,
-            text="Add New Event",
-            command=self.add_event_dialog,
-            font=("Arial", 10),
-            bg="lightgreen"
+            text="Add New Event",                    # Text shown on button
+            command=self.add_event_dialog,           # Function to call when clicked
+            font=("Arial", 10),                      # Font style and size
+            bg="lightgreen"                          # Background color
         )
+        # Pack on left side with some horizontal spacing
         add_btn.pack(side="left", padx=5)
 
+        # Create "Edit Selected Event" button with blue background
         edit_btn = tk.Button(
             buttons_frame,
-            text="Edit Selected Event",
-            command=self.edit_event_dialog,
-            font=("Arial", 10),
-            bg="lightblue"
+            text="Edit Selected Event",              # Button label
+            command=self.edit_event_dialog,          # Function to call when clicked
+            font=("Arial", 10),                      
+            bg="lightblue"                           # Light blue background
         )
+        # Pack next to the Add button on the left side
         edit_btn.pack(side="left", padx=5)
 
+        # Create "Delete Selected Event" button with red background
         delete_btn = tk.Button(
             buttons_frame,
-            text="Delete Selected Event",
-            command=self.delete_event,
+            text="Delete Selected Event",            # Button label
+            command=self.delete_event,               # Function to call when clicked
             font=("Arial", 10),
-            bg="lightcoral"
+            bg="lightcoral"                          # Light red/pink background for warning
         )
+        # Pack next to other buttons on left side
         delete_btn.pack(side="left", padx=5)
 
+        # Create "Close" button with default color
         close_btn = tk.Button(
             buttons_frame,
             text="Close",
-            command=self.window.destroy,
+            command=self.window.destroy,             # Destroy (close) the window when clicked
             font=("Arial", 10)
         )
+        # Pack on right side (opposite end from other buttons)
         close_btn.pack(side="right", padx=5)
 
-        # Load and display events for this day
-        self.current_events = []  # Track current events for deletion
+        # Initialize empty list to keep track of events for this day
+        # This list is used later when user wants to edit or delete events
+        self.current_events = []  
+        
+        # Load and display all events for this day in the listbox
         self.refresh_events_list()
 
     def refresh_events_list(self):
         """Refresh the events listbox with current events for the selected date."""
+        # Clear the listbox completely (remove all existing items)
+        # delete(0, tk.END) removes from first item (0) to last item (END)
         self.events_listbox.delete(0, tk.END)
 
-        # Get events for this date
+        # Convert the selected date to string format YYYY-MM-DD for database lookup
+        # Example: converts datetime.date(2024, 11, 2) to "2024-11-02"
         date_str = self.selected_date.strftime("%Y-%m-%d")
+        
+        # Get all events that occur on this specific date from the calendar
         self.current_events = self.get_events_for_date(date_str)
 
+        # Check if there are no events for this day
         if not self.current_events:
+            # Add a message to listbox telling user there are no events
             self.events_listbox.insert(tk.END, "No events scheduled for this day")
         else:
+            # Loop through each event and create a text description for display
             for event in self.current_events:
-                # Create detailed event text
+                # Build the display text based on event properties
                 if event.is_all_day:
+                    # For all-day events, show "All Day: Event Title"
                     event_text = f"All Day: {event.title}"
                 else:
+                    # For timed events, show "9:00 AM - 10:00 AM: Event Title"
                     event_text = f"{event.start_time} - {event.end_time}: {event.title}"
 
+                # Add extra info if the event repeats
                 if event.is_recurring:
                     event_text += f" (Repeats {event.recurrence_pattern})"
+                
+                # Add date range if event spans multiple days
                 if event.start_day != event.end_day:
                     event_text += f" [{event.start_day} to {event.end_day}]"
+                
+                # Add this formatted text as a new item in the listbox
+                # tk.END means add to the end of the list
                 self.events_listbox.insert(tk.END, event_text)
 
     def get_events_for_date(self, date_str):
@@ -160,21 +218,32 @@ class DayViewGUI():
     def toggle_recurrence_options(self, show, recurrence_frame):
         """Show or hide the recurrence options frame."""
         if show:
+            # Make the recurrence options visible by adding them back to the layout
             recurrence_frame.grid()
         else:
+            # Hide the recurrence options by removing them from the layout
+            # grid_remove() hides the widget but remembers its position
             recurrence_frame.grid_remove()
 
     def add_event_dialog(self):
         """Open a dialog to create a new event for the selected date."""
+        # Call the main form dialog with "Add" title and no event index (new event)
         self.event_form_dialog("Add New Event")
 
     def edit_event_dialog(self):
         """Open a dialog to edit the selected event."""
+        # Get which item is currently selected in the events listbox
+        # curselection() returns a tuple of selected indices
         selection = self.events_listbox.curselection()
+        
+        # Check if user actually selected an event
         if not selection:
+            # Show warning if no event is selected
             tk.messagebox.showwarning("No Selection", "Please select an event to edit.")
             return
 
+        # Call the form dialog with "Edit" title and the index of selected event
+        # selection[0] gets the first (and only) selected item's index
         self.event_form_dialog("Edit Event", selection[0])
 
     def event_form_dialog(self, title, event_index=None):
@@ -185,15 +254,20 @@ class DayViewGUI():
             title (str): Title of the dialog window
             event_index (int, optional): Index of event to edit (None for new event)
         """
+        # Step 1: Create the popup dialog window with title
         dialog = self.create_form_dialog_window(title)
+        
+        # Step 2: Create all the input fields (title, date, time, etc.) and get references to them
         fields_frame, form_fields = self.create_form_fields(dialog)
+        
+        # Step 3: Create the recurring event options section
         recurrence_frame, recurrence_var = self.create_recurrence_options(fields_frame, form_fields['recurring_var'])
         
-        # Populate form with existing event data if editing
+        # Step 4: If editing existing event, fill in the form with current values
         if event_index is not None and self.current_events:
             self.populate_form_for_editing(event_index, form_fields, recurrence_var, recurrence_frame)
         
-        # Create buttons
+        # Step 5: Create Save and Cancel buttons at bottom of form
         self.create_form_buttons(dialog, form_fields, recurrence_var, event_index)
 
     def create_form_dialog_window(self, title):
@@ -206,13 +280,22 @@ class DayViewGUI():
         Returns:
             tk.Toplevel: The configured dialog window
         """
+        # Create a new popup window that sits on top of the main day view window
         dialog = tk.Toplevel(self.window)
+        
+        # Set the window title (like "Add New Event" or "Edit Event")
         dialog.title(title)
+        
+        # Set window size: 500 pixels wide, 600 pixels tall
         dialog.geometry("500x600")
+        
+        # Prevent user from resizing this dialog window
         dialog.resizable(False, False)
 
-        # Make dialog modal
+        # Make dialog modal (user must interact with this window before returning to main window)
+        # transient() makes this window stay on top of parent window
         dialog.transient(self.window)
+        # grab_set() captures all mouse/keyboard input until dialog is closed
         dialog.grab_set()
         
         return dialog
@@ -227,62 +310,78 @@ class DayViewGUI():
         Returns:
             tuple: (fields_frame, form_fields_dict)
         """
-        # Event form fields
+        # Create a container frame to hold all the form input fields
         fields_frame = tk.Frame(dialog)
+        # Pack with padding and allow it to expand to fill available space
         fields_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-        # Title field
+        # Create label and input field for event title
+        # Label shows "Event Title:" in bold font
         tk.Label(fields_frame, text="Event Title:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", pady=5)
+        # Entry widget for user to type the event name
         title_entry = tk.Entry(fields_frame, font=("Arial", 10), width=30)
+        # Place in grid: row 0, column 1, span across 2 columns, align to left (west)
         title_entry.grid(row=0, column=1, columnspan=2, pady=5, padx=5, sticky="w")
 
-        # Start Date field
+        # Create label and date picker for event start date
         tk.Label(fields_frame, text="Start Date:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w", pady=5)
+        # DateEntry is a special widget that shows a calendar popup for date selection
         start_date_entry = DateEntry(fields_frame, font=("Arial", 10), width=12,
-                                     background='darkblue', foreground='white',
-                                     borderwidth=2, date_pattern='yyyy-mm-dd',
-                                     mindate=datetime.date.today())
+                                     background='darkblue', foreground='white',    # Color scheme
+                                     borderwidth=2, date_pattern='yyyy-mm-dd',    # Format: 2024-11-02
+                                     mindate=datetime.date.today())               # Can't select past dates
         start_date_entry.grid(row=1, column=1, pady=5, padx=5, sticky="w")
+        # Set the default date to the currently selected day
         start_date_entry.set_date(self.selected_date)
 
-        # End Date field
+        # Create label and date picker for event end date  
         tk.Label(fields_frame, text="End Date:", font=("Arial", 10, "bold")).grid(row=2, column=0, sticky="w", pady=5)
+        # Another DateEntry widget for the event end date (for multi-day events)
         end_date_entry = DateEntry(fields_frame, font=("Arial", 10), width=12,
                                    background='darkblue', foreground='white',
                                    borderwidth=2, date_pattern='yyyy-mm-dd',
                                    mindate=datetime.date.today())
         end_date_entry.grid(row=2, column=1, pady=5, padx=5, sticky="w")
+        # Default end date is same as start date (single day event)
         end_date_entry.set_date(self.selected_date)
 
-        # Start time field
+        # Create label and input field for event start time
         tk.Label(fields_frame, text="Start Time:", font=("Arial", 10, "bold")).grid(row=3, column=0, sticky="w", pady=5)
+        # Regular text entry for start time (user types "9:00 AM" format)
         start_time_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
         start_time_entry.grid(row=3, column=1, pady=5, padx=5, sticky="w")
+        # Pre-fill with default start time of 9:00 AM
         start_time_entry.insert(0, "09:00 AM")
 
-        # End time field
+        # Create label and input field for event end time
         tk.Label(fields_frame, text="End Time:", font=("Arial", 10, "bold")).grid(row=4, column=0, sticky="w", pady=5)
+        # Regular text entry for end time 
         end_time_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
         end_time_entry.grid(row=4, column=1, pady=5, padx=5, sticky="w")
+        # Pre-fill with default end time of 10:00 AM (1 hour event)
         end_time_entry.insert(0, "10:00 AM")
 
-        # All day checkbox
+        # Create checkbox for "All Day Event" option
+        # BooleanVar() stores True/False value for checkbox state
         all_day_var = tk.BooleanVar()
         all_day_check = tk.Checkbutton(
             fields_frame,
-            text="All Day Event",
-            variable=all_day_var,
+            text="All Day Event",                                                    # Text shown next to checkbox
+            variable=all_day_var,                                                   # Variable that stores checked state
             font=("Arial", 10),
+            # When clicked, call toggle_time_fields to enable/disable time inputs
             command=lambda: self.toggle_time_fields(all_day_var, start_time_entry, end_time_entry)
         )
         all_day_check.grid(row=5, column=1, sticky="w", pady=5)
 
-        # Description field
+        # Create label and text area for event description
+        # sticky="nw" means align to top-left (north-west) since text area is tall
         tk.Label(fields_frame, text="Description:", font=("Arial", 10, "bold")).grid(row=6, column=0, sticky="nw", pady=5)
+        # Text widget allows multiple lines of text input (unlike Entry which is single line)
         description_text = tk.Text(fields_frame, font=("Arial", 10), width=30, height=4)
         description_text.grid(row=6, column=1, columnspan=2, pady=5, padx=5, sticky="w")
 
-        # Recurring checkbox
+        # Create variable to store whether this is a recurring event
         recurring_var = tk.BooleanVar()
         
         # Store all form fields in a dictionary for easy access
@@ -517,52 +616,78 @@ class DayViewGUI():
 
     def toggle_time_fields(self, all_day_var, start_time_entry, end_time_entry):
         """Enable or disable time fields based on all-day status."""
+        # Check if the "All Day Event" checkbox is checked
         if all_day_var.get():
+            # If all-day event, disable (gray out) the time input fields
+            # config(state='disabled') makes the field uneditable and grayed out
             start_time_entry.config(state='disabled')
             end_time_entry.config(state='disabled')
+            
+            # Clear the time fields and show "All Day" instead
+            # delete(0, tk.END) removes all text from beginning to end
             start_time_entry.delete(0, tk.END)
-            start_time_entry.insert(0, "All Day")
+            start_time_entry.insert(0, "All Day")  # Insert "All Day" text at position 0
             end_time_entry.delete(0, tk.END)
             end_time_entry.insert(0, "All Day")
         else:
+            # If not all-day event, enable the time input fields
+            # config(state='normal') makes the field editable again
             start_time_entry.config(state='normal')
             end_time_entry.config(state='normal')
+            
+            # Clear fields and put back default times
             start_time_entry.delete(0, tk.END)
-            start_time_entry.insert(0, "09:00 AM")
+            start_time_entry.insert(0, "09:00 AM")  # Default start time
             end_time_entry.delete(0, tk.END)
-            end_time_entry.insert(0, "10:00 AM")
+            end_time_entry.insert(0, "10:00 AM")   # Default end time (1 hour later)
 
     def delete_event(self):
         """Delete the selected event after confirmation."""
+        # Get which event is currently selected in the listbox
         selection = self.events_listbox.curselection()
+        
+        # Check if user actually selected something
         if not selection:
             tk.messagebox.showwarning("No Selection", "Please select an event to delete.")
             return
 
+        # Get the index (position) of the selected item
+        # selection[0] gets the first selected item (listbox allows multiple selections)
         selected_index = selection[0]
 
-        # Check if there are actual events (not just "No events" message)
+        # Make sure there are actual events and the selection is valid
+        # Check if events list is empty or if selected index is beyond the list length
         if not self.current_events or selected_index >= len(self.current_events):
             tk.messagebox.showwarning("No Event", "No valid event selected to delete.")
             return
 
+        # Get the actual event object that corresponds to the selected list item
         selected_event = self.current_events[selected_index]
 
-        # Confirm deletion
+        # Show confirmation dialog before deleting (prevent accidental deletions)
+        # askyesno() returns True if user clicks "Yes", False if "No"
         confirm = tk.messagebox.askyesno(
             "Confirm Delete",
             f"Are you sure you want to delete the event '{selected_event.title}'?"
         )
 
+        # Only proceed if user confirmed they want to delete
         if confirm:
-            # Delete the event from the calendar
+            # Call the calendar's delete method to remove event from database
             success = self.calendar.delete_event(selected_event.event_id)
 
+            # Check if the deletion was successful
             if success:
+                # Refresh this day view to remove the deleted event from the list
                 self.refresh_events_list()
-                # Refresh the parent calendar display if available
+                
+                # If there's a parent month view window, refresh it too
+                # This updates the month calendar to remove the event dot/indicator
                 if self.parent_gui:
                     self.parent_gui.refresh_calendar_display()
+                    
+                # Show success message to user
                 tk.messagebox.showinfo("Success", "Event deleted successfully.")
             else:
+                # Show error message if deletion failed
                 tk.messagebox.showerror("Error", "Failed to delete event.")

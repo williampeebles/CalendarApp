@@ -5,6 +5,7 @@ import tkinter.messagebox as messagebox
 import Calendar_Class
 import DayViewGUI_Class
 import WeekViewGUI_Class
+import AgendaViewGUI_Class
 import Calendar_Database_Class
 
 
@@ -273,13 +274,18 @@ class MonthViewGUI():
         # Initialize the current month calendar
         self.current_calendar = self._get_month_calendar(self.current_year, self.current_month)
 
-        # Create header frame to position title and week button
+        # Create header frame to position title and view buttons
         header_frame = tk.Frame(self.window)
         header_frame.grid(row=0, column=0, columnspan=7, sticky="ew", pady=5)
         header_frame.columnconfigure(1, weight=1)  # Make middle column expand
 
+        # Week view button
         self.week_btn = tk.Button(header_frame, text="Week", command=self.open_week_view, font=("Arial", 10))
-        self.week_btn.grid(row=0, column=2, sticky="e", padx=10)
+        self.week_btn.grid(row=0, column=2, sticky="e", padx=(5, 5))
+
+        # Agenda view button
+        self.agenda_btn = tk.Button(header_frame, text="Agenda", command=self.open_agenda_view, font=("Arial", 10))
+        self.agenda_btn.grid(row=0, column=3, sticky="e", padx=(0, 10))
 
         self.header = tk.Label(header_frame, font=("Arial", 16, "bold"))
         self.header.grid(row=0, column=1)
@@ -383,6 +389,21 @@ class MonthViewGUI():
             WeekViewGUI_Class.WeekViewGUI(today_calendar, today.year, today.month, today.day, parent_gui=self)
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred opening week view: {str(e)}")
+
+    def open_agenda_view(self):
+        """
+        Open the agenda view showing all events across all months.
+        Creates an AgendaViewGUI window displaying all events in chronological order.
+        """
+        try:
+            # Use the current month calendar to access all events
+            current_date = datetime.date.today()
+            current_calendar = self._get_month_calendar(current_date.year, current_date.month)
+            
+            # Open agenda view
+            AgendaViewGUI_Class.AgendaViewGUI(current_calendar, parent_gui=self)
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred opening agenda view: {str(e)}")
 
     def on_day_click(self, year, month, day):
         """

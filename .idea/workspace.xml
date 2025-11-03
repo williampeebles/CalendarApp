@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Added property methods, getters and setters for attr in EVent Class">
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Added more methods to DayViewGUI class, removed inner methods in day DayViewGUI_Class">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DayViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/DayViewGUI_Class.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MonthViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/MonthViewGUI_Class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/calendar.db" beforeDir="false" afterPath="$PROJECT_DIR$/calendar.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -272,7 +274,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761758229216</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Added more methods to DayViewGUI class, removed inner methods in day DayViewGUI_Class">
+      <option name="closed" value="true" />
+      <created>1761796956615</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1761796956615</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -301,6 +311,7 @@
     <MESSAGE value="Updated Calendar_Database_Class.py, fixed saving and deleting events to the database." />
     <MESSAGE value="Added WeekViewGUI class, updated todo list, updated month view GUI" />
     <MESSAGE value="Added property methods, getters and setters for attr in EVent Class" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added property methods, getters and setters for attr in EVent Class" />
+    <MESSAGE value="Added more methods to DayViewGUI class, removed inner methods in day DayViewGUI_Class" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added more methods to DayViewGUI class, removed inner methods in day DayViewGUI_Class" />
   </component>
 </project>
