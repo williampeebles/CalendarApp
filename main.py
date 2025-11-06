@@ -5,15 +5,14 @@ To Include/Think about
 *******************************************************************************
 TODOList
 - Character limit on description
--When creating an event, if user selects a start day that is after the current date,
-then that event should be applied to that selected day
-- Instead of opening a new window for switching to week view, just change the current window's view.
--Add Agenda view
-No need for 11 parameters
-Refractor and no inner methods.
-Fix dataBase not deleting recods.
+- When creating an event, if a user selects a start day after the current date,
+  then that event should be applied to that selected day
+- No need for 11-parameter for one method
+- Refractor
+- Fix dataBase not deleting records.
 
-
+- GUI class is only supposed to interact with the user and user interacts with the GUI
+- Configuration file for that database class-recurring events applied to calendar
 """
 from Calendar_Class import Calendar
 from MonthViewGUI_Class import MonthViewGUI

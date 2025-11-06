@@ -2,6 +2,7 @@ import tkinter as tk
 import datetime
 import tkinter.messagebox as messagebox
 from tkcalendar import DateEntry
+import Calendar_Class
 
 class DayViewGUI():
     """
@@ -29,8 +30,17 @@ class DayViewGUI():
             day (int): Day of the selected date
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
-        # Store the calendar object so we can access events and modify them
-        self.calendar = calendar_obj
+        # Store the month calendar object so we can access events and modify them
+        self.month_calendar = calendar_obj
+        
+        # Get the parent Calendar instance for service methods
+        # If passed a MonthCalendar, get its parent Calendar; otherwise assume it's already a Calendar with service methods
+        if hasattr(calendar_obj, 'calendar'):
+            # This is likely a MonthCalendar, but we need the main Calendar for service methods
+            # For now, create a new Calendar instance for service methods
+            self.calendar = Calendar_Class.Calendar()
+        else:
+            self.calendar = calendar_obj
         
         # Create a date object from the year, month, day numbers passed in
         # This converts separate numbers (2024, 11, 15) into a single date object
@@ -39,9 +49,8 @@ class DayViewGUI():
         # Keep reference to parent window so we can refresh it when events change
         self.parent_gui = parent_gui
 
-        # Check if the date is valid (current or future)
-        # datetime.date.today() gets today's date for comparison
-        if self.selected_date < datetime.date.today():
+        # Check if the date is valid (current or future) using calendar
+        if self.selected_date < self.calendar.get_today():
             # Show a warning popup if user tries to view past dates
             tk.messagebox.showwarning("Invalid Date", "Cannot view or edit events for past dates.")
             # Exit early - don't create the window if date is invalid
@@ -71,10 +80,10 @@ class DayViewGUI():
         # padx/pady add spacing around the frame
         header_frame.pack(fill="x", padx=10, pady=5)
 
-        # Create a text label showing the date in large, bold font
+        # Create a text label showing the date in large, bold font using service formatting
         header_label = tk.Label(
             header_frame,
-            text=f"{self.selected_date.strftime('%A, %B %d, %Y')}",  # Format date as text
+            text=self.calendar.format_date_for_display(self.selected_date),
             font=("Arial", 18, "bold")  # Set font family, size, and style
         )
         # Add the label to the header frame
@@ -205,7 +214,7 @@ class DayViewGUI():
 
     def get_events_for_date(self, date_str):
         """
-        Get all events for a specific date from the calendar.
+        Get all events for a specific date from the calendar using calendar.
 
         Args:
             date_str (str): Date in YYYY-MM-DD format
@@ -213,7 +222,11 @@ class DayViewGUI():
         Returns:
             list: List of Event objects for the specified date
         """
-        return self.calendar.get_events_for_date(date_str)
+        # Parse date string and use calendar to get events
+        success, date_obj = self.calendar.parse_date_string(date_str)
+        if success:
+            return self.calendar.get_events_for_date_obj(self.month_calendar, date_obj)
+        return []
 
     def toggle_recurrence_options(self, show, recurrence_frame):
         """Show or hide the recurrence options frame."""
@@ -534,7 +547,8 @@ class DayViewGUI():
     def save_event_data(self, title_entry, start_date_entry, end_date_entry, start_time_entry, 
                        end_time_entry, description_text, recurring_var, all_day_var, 
                        recurrence_var, event_index, dialog):
-        """Save the event (add new or update existing)."""
+        """Save the event (add new or update existing) using calendar."""
+        # Get form data
         title_text = title_entry.get().strip()
         start_date_obj = start_date_entry.get_date()
         end_date_obj = end_date_entry.get_date()
@@ -545,74 +559,33 @@ class DayViewGUI():
         is_all_day = all_day_var.get()
         recurrence_pattern = recurrence_var.get() if is_recurring else None
 
-        # Validation
-        if not title_text:
-            tk.messagebox.showerror("Error", "Event title is required.")
-            return
-
-        # For all-day events, set standard times or skip time validation
-        if is_all_day:
-            start_time = "All Day"
-            end_time = "All Day"
+        if event_index is not None:
+            # Update existing event using calendar
+            selected_event = self.current_events[event_index]
+            success, message = self.calendar.update_event_in_calendar(
+                self.month_calendar, selected_event.event_id, title_text, 
+                start_date_obj, end_date_obj, start_time, end_time, 
+                description, is_recurring, recurrence_pattern, is_all_day
+            )
         else:
-            if not start_time or not end_time:
-                tk.messagebox.showerror("Error", "Start and end times are required for timed events.")
-                return
+            # Create new event using calendar
+            success, message, event_id = self.calendar.create_event(
+                self.month_calendar, title_text, start_date_obj, end_date_obj, 
+                start_time, end_time, description, is_recurring, 
+                recurrence_pattern, is_all_day
+            )
 
-        # Validate dates
-        try:
-            if end_date_obj < start_date_obj:
-                tk.messagebox.showerror("Error", "End date cannot be before start date.")
-                return
-
-            # Convert date objects to strings for storage
-            start_date = start_date_obj.strftime("%Y-%m-%d")
-            end_date = end_date_obj.strftime("%Y-%m-%d")
-
-        except ValueError:
-            tk.messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD format.")
-            return
-
-        if title_text and start_date and end_date:
-            # Update existing event
-            if event_index is not None:
-                selected_event = self.current_events[event_index]
-
-                # Update event in calendar
-                self.calendar.update_event(
-                    selected_event.event_id,
-                    new_title=title_text,
-                    new_start=start_time,
-                    new_end=end_time,
-                    new_desc=description,
-                    new_recurring=is_recurring,
-                    new_recurrence_pattern=recurrence_pattern,
-                    new_date=start_date,  # Use start_date as the new date
-                    new_start_day=start_date,  # Assuming start_day is the same as start_date
-                    new_end_day=end_date,  # Assuming end_day is the same as end_date
-                    new_all_day=is_all_day
-                )
-            else:
-                # New event, generate unique ID using the calendar's method
-                try:
-                    event_id = self.calendar.calendar.generate_event_id()
-                except Exception as e:
-                    tk.messagebox.showerror("Error", str(e))
-                    return
-
-                # Add event to calendar - this will automatically save to database if using MonthCalendar
-                self.calendar.add_event(
-                    event_id, title_text, self.selected_date.strftime("%Y-%m-%d"),
-                    start_date, end_date, start_time, end_time, description,
-                    is_recurring, recurrence_pattern, is_all_day
-                )
-
+        # Handle result
+        if success:
             # Refresh the events list and close dialog
             self.refresh_events_list()
             # Refresh the parent calendar display if available
             if self.parent_gui:
                 self.parent_gui.refresh_calendar_display()
             dialog.destroy()
+        else:
+            # Show error message
+            tk.messagebox.showerror("Error", message)
 
     def toggle_time_fields(self, all_day_var, start_time_entry, end_time_entry):
         """Enable or disable time fields based on all-day status."""
@@ -673,8 +646,8 @@ class DayViewGUI():
 
         # Only proceed if user confirmed they want to delete
         if confirm:
-            # Call the calendar's delete method to remove event from database
-            success = self.calendar.delete_event(selected_event.event_id)
+            # Delete event using calendar
+            success, message = self.calendar.delete_event_from_calendar(self.month_calendar, selected_event.event_id)
 
             # Check if the deletion was successful
             if success:
@@ -687,7 +660,7 @@ class DayViewGUI():
                     self.parent_gui.refresh_calendar_display()
                     
                 # Show success message to user
-                tk.messagebox.showinfo("Success", "Event deleted successfully.")
+                tk.messagebox.showinfo("Success", message)
             else:
                 # Show error message if deletion failed
-                tk.messagebox.showerror("Error", "Failed to delete event.")
+                tk.messagebox.showerror("Error", message)

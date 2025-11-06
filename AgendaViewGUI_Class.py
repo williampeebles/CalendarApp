@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import tkinter.messagebox
 import datetime
+import Calendar_Class
 
 class AgendaViewGUI():
     """
@@ -26,11 +27,17 @@ class AgendaViewGUI():
             calendar_obj (Calendar): The calendar object containing events
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
-        # Store reference to calendar object so we can access all events
-        self.calendar = calendar_obj
+        # Store reference to month calendar object so we can access all events
+        self.month_calendar = calendar_obj
+        
+        # Get a Calendar instance for service methods
+        self.calendar = Calendar_Class.Calendar()
         
         # Keep reference to parent window so we can refresh it when events change
         self.parent_gui = parent_gui
+        
+        # Dictionary to map treeview item IDs to event IDs
+        self.item_to_event_id = {}
         
         # Create and show the agenda view window
         self.create_agenda_window()
@@ -184,6 +191,9 @@ class AgendaViewGUI():
         # get_children() returns all items, delete() removes them
         for item in self.events_tree.get_children():
             self.events_tree.delete(item)
+        
+        # Clear the mapping dictionary
+        self.item_to_event_id.clear()
 
         # Get all events from the calendar
         all_events = self.get_all_events()
@@ -234,37 +244,17 @@ class AgendaViewGUI():
                 recurring_display    # Recurring column
             ))
 
-            # Store the actual event object with this treeview item
-            # We'll use tags to store the event_id, which we can use to retrieve the event later
-            self.events_tree.set(item_id, "event_id", event.event_id)
+            # Store the mapping from treeview item ID to event ID
+            self.item_to_event_id[item_id] = event.event_id
 
     def get_all_events(self):
         """
-        Get all events from the calendar across all dates.
+        Get all events from the calendar across all dates using calendar.
         
         Returns:
             list: List of all Event objects in the calendar
         """
-        # Handle different calendar object types
-        # MonthCalendar has a .calendar attribute that contains the actual Calendar object
-        if hasattr(self.calendar, 'calendar') and hasattr(self.calendar.calendar, 'events'):
-            # This is a MonthCalendar object
-            calendar_obj = self.calendar.calendar
-        elif hasattr(self.calendar, 'events'):
-            # This is a Calendar object directly
-            calendar_obj = self.calendar
-        else:
-            # Unknown calendar type
-            return []
-
-        # Get all events from the calendar's events dictionary
-        # The events dictionary stores {event_id: Event_object}
-        # We want just the Event objects, so we get the values
-        if calendar_obj.events:
-            return list(calendar_obj.events.values())
-        else:
-            # If no events dictionary or it's empty, return empty list
-            return []
+        return self.calendar.get_all_events(self.month_calendar)
 
     def edit_selected_event(self):
         """Open edit dialog for the selected event."""
@@ -279,8 +269,8 @@ class AgendaViewGUI():
         # Get the first selected item
         selected_item = selected_items[0]
         
-        # Retrieve the event_id stored with this treeview item
-        event_id = self.events_tree.set(selected_item, "event_id")
+        # Retrieve the event_id from our mapping dictionary
+        event_id = self.item_to_event_id.get(selected_item)
         
         # Check if this is a valid event (not the "No events found" message)
         if not event_id:
@@ -289,12 +279,12 @@ class AgendaViewGUI():
 
         # Get the actual event object using the event_id
         # Handle different calendar object types
-        if hasattr(self.calendar, 'calendar'):
+        if hasattr(self.month_calendar, 'calendar'):
             # This is a MonthCalendar object
-            event_obj = self.calendar.calendar.get_event(event_id)
+            event_obj = self.month_calendar.calendar.get_event(event_id)
         else:
             # This is a Calendar object directly
-            event_obj = self.calendar.get_event(event_id)
+            event_obj = self.month_calendar.get_event(event_id)
             
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
@@ -311,7 +301,7 @@ class AgendaViewGUI():
             # Create a day view for this event's date
             # The day view has the event editing functionality we need
             day_view = DayViewGUI(
-                self.calendar, 
+                self.month_calendar, 
                 date_obj.year, 
                 date_obj.month, 
                 date_obj.day, 
@@ -344,8 +334,8 @@ class AgendaViewGUI():
         # Get the first selected item
         selected_item = selected_items[0]
         
-        # Retrieve the event_id stored with this treeview item  
-        event_id = self.events_tree.set(selected_item, "event_id")
+        # Retrieve the event_id from our mapping dictionary
+        event_id = self.event_id_map.get(selected_item)
         
         # Check if this is a valid event (not the "No events found" message)
         if not event_id:
@@ -354,12 +344,12 @@ class AgendaViewGUI():
 
         # Get the actual event object using the event_id  
         # Handle different calendar object types
-        if hasattr(self.calendar, 'calendar'):
+        if hasattr(self.month_calendar, 'calendar'):
             # This is a MonthCalendar object
-            event_obj = self.calendar.calendar.get_event(event_id)
+            event_obj = self.month_calendar.calendar.get_event(event_id)
         else:
             # This is a Calendar object directly
-            event_obj = self.calendar.get_event(event_id)
+            event_obj = self.month_calendar.get_event(event_id)
             
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
@@ -374,8 +364,8 @@ class AgendaViewGUI():
 
         # Only proceed if user confirmed they want to delete
         if confirm:
-            # Call the calendar's delete method to remove event from database
-            success = self.calendar.delete_event(event_obj.event_id)
+            # Delete event using calendar
+            success, message = self.calendar.delete_event_from_calendar(self.month_calendar, event_obj.event_id)
 
             # Check if the deletion was successful
             if success:
@@ -388,7 +378,7 @@ class AgendaViewGUI():
                     self.parent_gui.refresh_calendar_display()
                     
                 # Show success message to user
-                tk.messagebox.showinfo("Success", "Event deleted successfully.")
+                tk.messagebox.showinfo("Success", message)
             else:
                 # Show error message if deletion failed
-                tk.messagebox.showerror("Error", "Failed to delete event.")
+                tk.messagebox.showerror("Error", message)

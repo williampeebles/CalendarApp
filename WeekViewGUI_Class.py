@@ -3,6 +3,7 @@ import datetime
 import calendar
 import tkinter.messagebox as messagebox
 import DayViewGUI_Class
+import Calendar_Class
 
 
 class WeekViewGUI():
@@ -33,14 +34,18 @@ class WeekViewGUI():
             day (int): Day of the selected date
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
+        # Get a Calendar instance for service methods
+        self.calendar = Calendar_Class.Calendar()
+        
         self.calendar_obj = calendar_obj
         self.selected_date = datetime.date(year, month, day)
         self.parent_gui = parent_gui
-        self.today = datetime.date.today()
+        
+        # Get today from service
+        self.today = self.calendar.get_today()
 
-        # Calculate the start of the week (Sunday)
-        days_since_sunday = (self.selected_date.weekday() + 1) % 7
-        self.current_week_start = self.selected_date - datetime.timedelta(days=days_since_sunday)
+        # Calculate the start of the week using service
+        self.current_week_start = self.calendar.calculate_week_start(self.selected_date)
 
         self.create_week_view_window()
 
@@ -93,8 +98,8 @@ class WeekViewGUI():
 
     def go_to_current_week(self):
         """Navigate to the current week containing today's date."""
-        days_since_sunday = (self.today.weekday() + 1) % 7
-        self.current_week_start = self.today - datetime.timedelta(days=days_since_sunday)
+        today = self.calendar.get_today()
+        self.current_week_start = self.calendar.calculate_week_start(today)
         self.show_week()
 
     def get_calendar_for_date(self, date):
@@ -123,8 +128,8 @@ class WeekViewGUI():
             date (datetime.date): The clicked date
         """
         try:
-            # Check if the date is current or future
-            if date >= datetime.date.today():
+            # Check if the date is current or future using service
+            if date >= self.calendar.get_today():
                 # Get the appropriate calendar for the clicked date
                 date_calendar = self.get_calendar_for_date(date)
                 # Open day view for valid dates - pass self as parent for refresh callback
@@ -151,15 +156,8 @@ class WeekViewGUI():
         # Calculate week end date for header
         week_end = self.current_week_start + datetime.timedelta(days=6)
 
-        # Update header with week range
-        if self.current_week_start.year == week_end.year:
-            if self.current_week_start.month == week_end.month:
-                header_text = f"{calendar.month_name[self.current_week_start.month]} {self.current_week_start.day}-{week_end.day}, {self.current_week_start.year}"
-            else:
-                header_text = f"{calendar.month_name[self.current_week_start.month]} {self.current_week_start.day} - {calendar.month_name[week_end.month]} {week_end.day}, {self.current_week_start.year}"
-        else:
-            header_text = f"{calendar.month_name[self.current_week_start.month]} {self.current_week_start.day}, {self.current_week_start.year} - {calendar.month_name[week_end.month]} {week_end.day}, {week_end.year}"
-
+        # Use service for week display formatting
+        header_text = self.calendar.format_week_display_name(self.current_week_start, week_end)
         self.header.config(text=header_text)
 
         # Days of the week headers
