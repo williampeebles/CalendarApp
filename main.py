@@ -9,9 +9,7 @@ TODOList
   then that event should be applied to that selected day
 - No need for 11-parameter for one method
 - Refractor
-- Fix dataBase not deleting records.
 
-- GUI class is only supposed to interact with the user and user interacts with the GUI
 - Configuration file for that database class-recurring events applied to calendar
 """
 from Calendar_Class import Calendar

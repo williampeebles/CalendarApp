@@ -1,27 +1,20 @@
 """
-New Simple Calendar Class
+Simple Calendar Class
 
 This is a much simpler version of the Calendar class that uses the service pattern.
-Instead of doing everything itself, it delegates to the CalendarService for business logic.
+Instead of doing everything itself, it delegates to the CalendarService for logic.
 
 What this class does:
 - Provides a simple interface for GUI classes to use
 - Handles date calculations and utilities
 - Coordinates with the CalendarService for event operations
 - Maintains compatibility with existing GUI code
-
-What it doesn't do anymore:
-- Direct database operations (handled by repository)
-- Complex event management (handled by service)
-- Event validation (handled by service)
 """
 
 import datetime
 import calendar
-from typing import List, Tuple, Optional
 from CalendarService import CalendarService
 from Calendar_Database_Class import CalendarDatabase
-from Event_Class import Event
 
 
 class Calendar:
@@ -32,12 +25,12 @@ class Calendar:
     the complex business logic to the CalendarService.
     """
 
-    def __init__(self, calendar_service: CalendarService = None):
+    def __init__(self, calendar_service=None):
         """
         Initialize the calendar with a service.
 
         Args:
-            calendar_service (CalendarService, optional): Service to use for business logic.
+            calendar_service (CalendarService, optional): Service to use for logic.
                                                         Creates a default one if not provided.
         """
         if calendar_service is None:
@@ -50,14 +43,14 @@ class Calendar:
     # === EVENT OPERATIONS (delegate to service) ===
 
     def create_event(self,
-                     title: str,
-                     date: datetime.date,
-                     start_time: str = "",
-                     end_time: str = "",
-                     description: str = "",
-                     is_all_day: bool = False,
-                     is_recurring: bool = False,
-                     recurrence_pattern: str = "") -> Tuple[bool, str, Optional[int]]:
+                     title,
+                     date,
+                     start_time="",
+                     end_time="",
+                     description="",
+                     is_all_day=False,
+                     is_recurring=False,
+                     recurrence_pattern=""):
         """
         Create a new event.
 
@@ -79,19 +72,19 @@ class Calendar:
             is_all_day, is_recurring, recurrence_pattern
         )
 
-    def get_events_for_month(self, year: int, month: int) -> List[Event]:
+    def get_events_for_month(self, year, month):
         """Get all events for a specific month."""
         return self.service.get_events_for_month(year, month)
 
-    def get_events_for_date(self, date: datetime.date) -> List[Event]:
+    def get_events_for_date(self, date):
         """Get all events for a specific date."""
         return self.service.get_events_for_date(date)
 
-    def get_event_by_id(self, event_id: int) -> Optional[Event]:
+    def get_event_by_id(self, event_id):
         """Get a specific event by its ID."""
         return self.service.get_event_by_id(event_id)
 
-    def update_event(self, event_id: int, **kwargs) -> Tuple[bool, str]:
+    def update_event(self, event_id, **kwargs):
         """
         Update an existing event.
 
@@ -104,21 +97,21 @@ class Calendar:
         """
         return self.service.update_event(event_id, **kwargs)
 
-    def delete_event(self, event_id: int) -> Tuple[bool, str]:
+    def delete_event(self, event_id):
         """Delete an event."""
         return self.service.delete_event(event_id)
 
-    def has_events_on_date(self, date: datetime.date) -> bool:
+    def has_events_on_date(self, date):
         """Check if there are events on a specific date."""
         return self.service.has_events_on_date(date)
 
     # === DATE UTILITIES ===
 
-    def get_today(self) -> datetime.date:
+    def get_today(self):
         """Get today's date."""
         return self.service.get_today()
 
-    def get_current_month_year(self) -> Tuple[int, int]:
+    def get_current_month_year(self):
         """
         Get current month and year.
 
@@ -128,7 +121,7 @@ class Calendar:
         today = self.get_today()
         return today.month, today.year
 
-    def calculate_next_month(self, year: int, month: int) -> Tuple[int, int]:
+    def calculate_next_month(self, year, month):
         """
         Calculate the next month and year.
 
@@ -144,7 +137,7 @@ class Calendar:
         else:
             return year + 1, 1
 
-    def calculate_previous_month(self, year: int, month: int) -> Tuple[int, int]:
+    def calculate_previous_month(self, year, month):
         """
         Calculate the previous month and year.
 
@@ -160,7 +153,7 @@ class Calendar:
         else:
             return year - 1, 12
 
-    def calculate_week_start(self, date: datetime.date) -> datetime.date:
+    def calculate_week_start(self, date):
         """
         Calculate the start of the week (Sunday) for a given date.
 
@@ -173,7 +166,7 @@ class Calendar:
         days_since_sunday = (date.weekday() + 1) % 7
         return date - datetime.timedelta(days=days_since_sunday)
 
-    def calculate_week_dates(self, week_start: datetime.date) -> List[datetime.date]:
+    def calculate_week_dates(self, week_start):
         """
         Calculate all 7 dates in a week starting from the given date.
 
@@ -187,7 +180,7 @@ class Calendar:
 
     # === FORMATTING UTILITIES ===
 
-    def format_month_display_name(self, year: int, month: int) -> str:
+    def format_month_display_name(self, year, month):
         """
         Format month and year for display.
 
@@ -200,7 +193,7 @@ class Calendar:
         """
         return f"{calendar.month_name[month]} {year}"
 
-    def format_week_display_name(self, week_start: datetime.date, week_end: datetime.date) -> str:
+    def format_week_display_name(self, week_start, week_end):
         """
         Format week range for display.
 
@@ -219,14 +212,14 @@ class Calendar:
         else:
             return f"{calendar.month_name[week_start.month]} {week_start.day}, {week_start.year} - {calendar.month_name[week_end.month]} {week_end.day}, {week_end.year}"
 
-    def format_date_for_display(self, date: datetime.date) -> str:
+    def format_date_for_display(self, date):
         """Format a date for nice display."""
         return self.service.format_date_for_display(date)
 
     # === COMPATIBILITY METHODS ===
     # These methods help maintain compatibility with existing GUI code
 
-    def get_month_calendar(self, year: int, month: int) -> 'MonthView':
+    def get_month_calendar(self, year, month):
         """
         Get a month view object for compatibility with existing code.
 
@@ -249,7 +242,7 @@ class MonthView:
     It's just a container for month data, not a complex class with database operations.
     """
 
-    def __init__(self, year: int, month: int, events: List[Event]):
+    def __init__(self, year, month, events):
         """
         Initialize a month view with events.
 
@@ -263,7 +256,7 @@ class MonthView:
         self.events = {event.event_id: event for event in events}
         self.events_by_date = self._group_events_by_date(events)
 
-    def _group_events_by_date(self, events: List[Event]) -> dict:
+    def _group_events_by_date(self, events):
         """
         Group events by their date.
 
@@ -284,7 +277,7 @@ class MonthView:
                 grouped[date_str].append(event_id)
         return grouped
 
-    def get_events_for_date(self, date_str: str) -> List[Event]:
+    def get_events_for_date(self, date_str):
         """
         Get all events for a specific date.
 
@@ -297,7 +290,7 @@ class MonthView:
         event_ids = self.events_by_date.get(date_str, [])
         return [self.events[event_id] for event_id in event_ids if event_id in self.events]
 
-    def get_event(self, event_id: int) -> Optional[Event]:
+    def get_event(self, event_id):
         """
         Get a specific event by ID.
 

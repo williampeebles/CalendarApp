@@ -4,13 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py.">
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Refactored and modified some Calendar_Class.py and Calendar_Database_Class.py. Also Added CalendarService class. Tried to implement SOLID Principles">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AgendaViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/AgendaViewGUI_Class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Calendar_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/Calendar_Class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Calendar_Database_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/Calendar_Database_Class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DayViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/DayViewGUI_Class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MonthViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/MonthViewGUI_Class.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MonthCalendar_Class.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/calendar.db" beforeDir="false" afterPath="$PROJECT_DIR$/calendar.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -309,7 +305,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762434994229</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Refactored and modified some Calendar_Class.py and Calendar_Database_Class.py. Also Added CalendarService class. Tried to implement SOLID Principles">
+      <option name="closed" value="true" />
+      <created>1762757346713</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1762757346713</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -342,6 +346,7 @@
     <MESSAGE value="Added AgendaViewGUI Class and updated other classes." />
     <MESSAGE value="Debugged database, fix:made ID's consistent between event instances." />
     <MESSAGE value="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py." />
-    <option name="LAST_COMMIT_MESSAGE" value="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py." />
+    <MESSAGE value="Refactored and modified some Calendar_Class.py and Calendar_Database_Class.py. Also Added CalendarService class. Tried to implement SOLID Principles" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactored and modified some Calendar_Class.py and Calendar_Database_Class.py. Also Added CalendarService class. Tried to implement SOLID Principles" />
   </component>
 </project>
