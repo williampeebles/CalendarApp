@@ -17,6 +17,17 @@ TODOList
 from Calendar_Class import Calendar
 from MonthViewGUI_Class import MonthViewGUI
 
-# Create a calendar instance and start the GUI
-calendar_app = Calendar()
-MonthViewGUI(calendar_app)
+
+def main():
+    # Create calendar instance
+    calendar = Calendar()
+    print("Calendar application started!")
+    print("Calendar instance created successfully.")
+
+    # Launch the GUI
+    print("Starting calendar GUI...")
+    gui = MonthViewGUI(calendar)
+
+
+if __name__ == "__main__":
+    main()

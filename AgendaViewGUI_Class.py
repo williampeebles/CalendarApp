@@ -1,10 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
-import tkinter.messagebox
 import datetime
-import Calendar_Class
 
-class AgendaViewGUI():
+
+class AgendaViewGUI:
     """
     A GUI class that displays all events in a scrollable agenda/list format.
 
@@ -27,18 +26,15 @@ class AgendaViewGUI():
             calendar_obj (Calendar): The calendar object containing events
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
-        # Store reference to month calendar object so we can access all events
-        self.month_calendar = calendar_obj
-        
-        # Get a Calendar instance for service methods
-        self.calendar = Calendar_Class.Calendar()
-        
+        # Store reference to the calendar object for all event operations
+        self.calendar = calendar_obj
+
         # Keep reference to parent window so we can refresh it when events change
         self.parent_gui = parent_gui
-        
+
         # Dictionary to map treeview item IDs to event IDs
         self.item_to_event_id = {}
-        
+
         # Create and show the agenda view window
         self.create_agenda_window()
 
@@ -46,13 +42,13 @@ class AgendaViewGUI():
         """Create and setup the agenda view window with all components."""
         # Create a new popup window (Toplevel creates a separate window)
         self.window = tk.Toplevel()
-        
+
         # Set the window title
         self.window.title("Agenda View - All Events")
-        
+
         # Set window size: 800 pixels wide, 600 pixels tall (larger for list view)
         self.window.geometry("800x600")
-        
+
         # Allow user to resize the window both horizontally and vertically
         self.window.resizable(True, True)
 
@@ -87,7 +83,7 @@ class AgendaViewGUI():
     def create_events_treeview(self, parent_frame):
         """
         Create a treeview widget to display events in a table format.
-        
+
         Args:
             parent_frame (tk.LabelFrame): The frame to contain the treeview
         """
@@ -97,14 +93,14 @@ class AgendaViewGUI():
 
         # Define columns for the treeview (like a spreadsheet)
         columns = ("Date", "Time", "Title", "Description", "Recurring")
-        
+
         # Create the treeview widget with defined columns
         # show="tree headings" shows both the tree structure and column headers
         self.events_tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
 
         # Configure each column with heading text and width
         self.events_tree.heading("Date", text="Date")
-        self.events_tree.heading("Time", text="Time") 
+        self.events_tree.heading("Time", text="Time")
         self.events_tree.heading("Title", text="Event Title")
         self.events_tree.heading("Description", text="Description")
         self.events_tree.heading("Recurring", text="Recurring")
@@ -128,12 +124,12 @@ class AgendaViewGUI():
 
         # Pack the treeview and scrollbars using grid for better control
         self.events_tree.grid(row=0, column=0, sticky="nsew")  # nsew = north,south,east,west (fill all directions)
-        v_scrollbar.grid(row=0, column=1, sticky="ns")         # ns = north,south (vertical only)
-        h_scrollbar.grid(row=1, column=0, sticky="ew")         # ew = east,west (horizontal only)
+        v_scrollbar.grid(row=0, column=1, sticky="ns")  # ns = north,south (vertical only)
+        h_scrollbar.grid(row=1, column=0, sticky="ew")  # ew = east,west (horizontal only)
 
         # Configure grid weights so treeview expands when window is resized
-        tree_frame.grid_rowconfigure(0, weight=1)    # Row 0 (treeview) gets all extra vertical space
-        tree_frame.grid_columnconfigure(0, weight=1) # Column 0 (treeview) gets all extra horizontal space
+        tree_frame.grid_rowconfigure(0, weight=1)  # Row 0 (treeview) gets all extra vertical space
+        tree_frame.grid_columnconfigure(0, weight=1)  # Column 0 (treeview) gets all extra horizontal space
 
     def create_action_buttons(self):
         """Create buttons for event management actions."""
@@ -145,10 +141,10 @@ class AgendaViewGUI():
         # Create "Edit Selected Event" button with blue background
         edit_btn = tk.Button(
             buttons_frame,
-            text="Edit Selected Event",              # Button label
-            command=self.edit_selected_event,        # Function to call when clicked
+            text="Edit Selected Event",  # Button label
+            command=self.edit_selected_event,  # Function to call when clicked
             font=("Arial", 10),
-            bg="lightblue"                           # Light blue background
+            bg="lightblue"  # Light blue background
         )
         # Pack on left side with some horizontal spacing
         edit_btn.pack(side="left", padx=5)
@@ -156,10 +152,10 @@ class AgendaViewGUI():
         # Create "Delete Selected Event" button with red background
         delete_btn = tk.Button(
             buttons_frame,
-            text="Delete Selected Event",            # Button label
-            command=self.delete_selected_event,      # Function to call when clicked
+            text="Delete Selected Event",  # Button label
+            command=self.delete_selected_event,  # Function to call when clicked
             font=("Arial", 10),
-            bg="lightcoral"                          # Light red/pink background for warning
+            bg="lightcoral"  # Light red/pink background for warning
         )
         # Pack next to edit button on left side
         delete_btn.pack(side="left", padx=5)
@@ -167,10 +163,10 @@ class AgendaViewGUI():
         # Create "Refresh" button to reload all events
         refresh_btn = tk.Button(
             buttons_frame,
-            text="Refresh",                          # Button label
-            command=self.refresh_events_display,     # Function to call when clicked
+            text="Refresh",  # Button label
+            command=self.refresh_events_display,  # Function to call when clicked
             font=("Arial", 10),
-            bg="lightgreen"                          # Light green background
+            bg="lightgreen"  # Light green background
         )
         # Pack next to other buttons on left side
         refresh_btn.pack(side="left", padx=5)
@@ -179,7 +175,7 @@ class AgendaViewGUI():
         close_btn = tk.Button(
             buttons_frame,
             text="Close",
-            command=self.window.destroy,             # Destroy (close) the window when clicked
+            command=self.window.destroy,  # Destroy (close) the window when clicked
             font=("Arial", 10)
         )
         # Pack on right side (opposite end from other buttons)
@@ -191,7 +187,7 @@ class AgendaViewGUI():
         # get_children() returns all items, delete() removes them
         for item in self.events_tree.get_children():
             self.events_tree.delete(item)
-        
+
         # Clear the mapping dictionary
         self.item_to_event_id.clear()
 
@@ -237,11 +233,11 @@ class AgendaViewGUI():
             # "" means insert at root level, "end" means add to end of list
             # values is a tuple containing data for each column
             item_id = self.events_tree.insert("", "end", values=(
-                formatted_date,      # Date column
-                time_display,        # Time column
-                event.title,         # Title column
-                description,         # Description column
-                recurring_display    # Recurring column
+                formatted_date,  # Date column
+                time_display,  # Time column
+                event.title,  # Title column
+                description,  # Description column
+                recurring_display  # Recurring column
             ))
 
             # Store the mapping from treeview item ID to event ID
@@ -249,18 +245,45 @@ class AgendaViewGUI():
 
     def get_all_events(self):
         """
-        Get all events from the calendar across all dates using calendar.
-        
+        Get all events from the calendar across multiple months.
+
+        Since the agenda view shows all events, we'll get events from current month
+        and a few months around it to give a comprehensive view.
+
         Returns:
             list: List of all Event objects in the calendar
         """
-        return self.calendar.get_all_events(self.month_calendar)
+        all_events = []
+        today = datetime.date.today()
+
+        # Get events from 6 months before to 6 months after current month
+        for month_offset in range(-6, 7):
+            # Calculate the target month and year
+            target_month = today.month + month_offset
+            target_year = today.year
+
+            # Handle year rollover
+            while target_month <= 0:
+                target_month += 12
+                target_year -= 1
+            while target_month > 12:
+                target_month -= 12
+                target_year += 1
+
+            # Get events for this month
+            month_events = self.calendar.get_events_for_month(target_year, target_month)
+            all_events.extend(month_events)
+
+        # Sort events by date and time
+        all_events.sort(key=lambda event: (event.date, event.start_time))
+
+        return all_events
 
     def edit_selected_event(self):
         """Open edit dialog for the selected event."""
         # Get which item is currently selected in the treeview
         selected_items = self.events_tree.selection()
-        
+
         # Check if user actually selected something
         if not selected_items:
             tk.messagebox.showwarning("No Selection", "Please select an event to edit.")
@@ -268,24 +291,18 @@ class AgendaViewGUI():
 
         # Get the first selected item
         selected_item = selected_items[0]
-        
+
         # Retrieve the event_id from our mapping dictionary
         event_id = self.item_to_event_id.get(selected_item)
-        
+
         # Check if this is a valid event (not the "No events found" message)
         if not event_id:
             tk.messagebox.showwarning("Invalid Selection", "Cannot edit this item.")
             return
 
         # Get the actual event object using the event_id
-        # Handle different calendar object types
-        if hasattr(self.month_calendar, 'calendar'):
-            # This is a MonthCalendar object
-            event_obj = self.month_calendar.calendar.get_event(event_id)
-        else:
-            # This is a Calendar object directly
-            event_obj = self.month_calendar.get_event(event_id)
-            
+        event_obj = self.calendar.get_event_by_id(event_id)
+
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
             return
@@ -294,20 +311,20 @@ class AgendaViewGUI():
         # We'll use the event's date to create the day view
         try:
             from DayViewGUI_Class import DayViewGUI
-            
+
             # Parse the event date to get year, month, day
             date_obj = datetime.datetime.strptime(event_obj.start_day, "%Y-%m-%d")
-            
+
             # Create a day view for this event's date
             # The day view has the event editing functionality we need
             day_view = DayViewGUI(
-                self.month_calendar, 
-                date_obj.year, 
-                date_obj.month, 
-                date_obj.day, 
+                self.calendar,
+                date_obj.year,
+                date_obj.month,
+                date_obj.day,
                 self.parent_gui
             )
-            
+
             # Find the event in the day view's event list and trigger edit
             day_view.refresh_events_list()
             for i, day_event in enumerate(day_view.current_events):
@@ -315,7 +332,7 @@ class AgendaViewGUI():
                     # Found the matching event, open edit dialog
                     day_view.event_form_dialog("Edit Event", i)
                     break
-                    
+
         except ImportError:
             tk.messagebox.showerror("Error", "Cannot import DayViewGUI class for editing.")
         except Exception as e:
@@ -325,7 +342,7 @@ class AgendaViewGUI():
         """Delete the selected event after confirmation."""
         # Get which item is currently selected in the treeview
         selected_items = self.events_tree.selection()
-        
+
         # Check if user actually selected something
         if not selected_items:
             tk.messagebox.showwarning("No Selection", "Please select an event to delete.")
@@ -333,24 +350,18 @@ class AgendaViewGUI():
 
         # Get the first selected item
         selected_item = selected_items[0]
-        
+
         # Retrieve the event_id from our mapping dictionary
-        event_id = self.event_id_map.get(selected_item)
-        
+        event_id = self.item_to_event_id.get(selected_item)
+
         # Check if this is a valid event (not the "No events found" message)
         if not event_id:
             tk.messagebox.showwarning("Invalid Selection", "Cannot delete this item.")
             return
 
-        # Get the actual event object using the event_id  
-        # Handle different calendar object types
-        if hasattr(self.month_calendar, 'calendar'):
-            # This is a MonthCalendar object
-            event_obj = self.month_calendar.calendar.get_event(event_id)
-        else:
-            # This is a Calendar object directly
-            event_obj = self.month_calendar.get_event(event_id)
-            
+        # Get the actual event object using the event_id
+        event_obj = self.calendar.get_event_by_id(event_id)
+
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
             return
@@ -364,19 +375,19 @@ class AgendaViewGUI():
 
         # Only proceed if user confirmed they want to delete
         if confirm:
-            # Delete event using calendar
-            success, message = self.calendar.delete_event_from_calendar(self.month_calendar, event_obj.event_id)
+            # Delete event using the new calendar system
+            success, message = self.calendar.delete_event(event_id)
 
             # Check if the deletion was successful
             if success:
                 # Refresh this agenda view to remove the deleted event from the list
                 self.refresh_events_display()
-                
+
                 # If there's a parent month view window, refresh it too
                 # This updates the month calendar to remove the event indicator
                 if self.parent_gui:
                     self.parent_gui.refresh_calendar_display()
-                    
+
                 # Show success message to user
                 tk.messagebox.showinfo("Success", message)
             else:

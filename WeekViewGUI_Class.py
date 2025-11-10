@@ -3,10 +3,9 @@ import datetime
 import calendar
 import tkinter.messagebox as messagebox
 import DayViewGUI_Class
-import Calendar_Class
 
 
-class WeekViewGUI():
+class WeekViewGUI:
     """
     A GUI class that displays a weekly calendar view using tkinter.
     This class creates a graphical calendar interface that shows a week view
@@ -19,7 +18,7 @@ class WeekViewGUI():
         current_week_start (datetime.date): Start date of the currently displayed week
         header (tk.Label): Label displaying the week range
         frame (tk.Frame): Frame containing the week grid
-        calendar_obj (MonthCalendar): Calendar object for event management
+        calendar_obj (Calendar): Calendar object for event management
         parent_gui (MonthViewGUI): Reference to parent month view for data consistency
     """
 
@@ -28,19 +27,17 @@ class WeekViewGUI():
         Initialize the WeekViewGUI for a specific date's week.
 
         Args:
-            calendar_obj (MonthCalendar): The calendar object containing events
+            calendar_obj (Calendar): The calendar object containing events
             year (int): Year of the selected date
             month (int): Month of the selected date
             day (int): Day of the selected date
             parent_gui (MonthViewGUI, optional): Reference to parent month view for refreshing
         """
-        # Get a Calendar instance for service methods
-        self.calendar = Calendar_Class.Calendar()
-        
-        self.calendar_obj = calendar_obj
+        # Store the calendar object for all operations
+        self.calendar = calendar_obj
         self.selected_date = datetime.date(year, month, day)
         self.parent_gui = parent_gui
-        
+
         # Get today from service
         self.today = self.calendar.get_today()
 
@@ -104,18 +101,16 @@ class WeekViewGUI():
 
     def get_calendar_for_date(self, date):
         """
-        Get the appropriate calendar object for a specific date.
-        Uses the parent GUI's method to get the correct month calendar.
+        Get the calendar object for any date.
+        With the new architecture, we use the main calendar for all dates.
 
         Args:
             date (datetime.date): The date to get the calendar for
 
         Returns:
-            MonthCalendar: The calendar object for the date's month
+            Calendar: The main calendar object
         """
-        if self.parent_gui:
-            return self.parent_gui._get_month_calendar(date.year, date.month)
-        return self.calendar_obj
+        return self.calendar
 
     def on_day_click(self, date):
         """
@@ -130,10 +125,8 @@ class WeekViewGUI():
         try:
             # Check if the date is current or future using service
             if date >= self.calendar.get_today():
-                # Get the appropriate calendar for the clicked date
-                date_calendar = self.get_calendar_for_date(date)
                 # Open day view for valid dates - pass self as parent for refresh callback
-                DayViewGUI_Class.DayViewGUI(date_calendar, date.year, date.month, date.day, parent_gui=self)
+                DayViewGUI_Class.DayViewGUI(self.calendar, date.year, date.month, date.day, parent_gui=self)
             else:
                 # Show warning for past dates
                 messagebox.showwarning(
@@ -178,12 +171,8 @@ class WeekViewGUI():
             else:
                 fg = "black"
 
-            # Get the appropriate calendar for this date
-            date_calendar = self.get_calendar_for_date(current_date)
-
-            # Determine background color based on event existence
-            date_str = f"{current_date.year}-{current_date.month:02d}-{current_date.day:02d}"
-            has_events = date_str in date_calendar.events_by_date
+            # Check for events using the new calendar system
+            has_events = self.calendar.has_events_on_date(current_date)
             bg_color = "yellow" if has_events else None
 
             # Create button text with date and day
@@ -191,7 +180,8 @@ class WeekViewGUI():
 
             # Add event count if there are events
             if has_events:
-                event_count = len(date_calendar.events_by_date[date_str])
+                events_on_date = self.calendar.get_events_for_date(current_date)
+                event_count = len(events_on_date)
                 button_text += f"\n({event_count} event{'s' if event_count != 1 else ''})"
 
             # Create clickable day button

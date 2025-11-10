@@ -4,13 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Debugged database, fix:made ID's consistent between event instances.">
+    <list default="true" id="92fec6d8-6fcb-445d-963a-f9feed819823" name="Changes" comment="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AgendaViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/AgendaViewGUI_Class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Calendar_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/Calendar_Class.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calendar_Database_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/Calendar_Database_Class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DayViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/DayViewGUI_Class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MonthViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/MonthViewGUI_Class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/WeekViewGUI_Class.py" beforeDir="false" afterPath="$PROJECT_DIR$/WeekViewGUI_Class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/calendar.db" beforeDir="false" afterPath="$PROJECT_DIR$/calendar.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -301,7 +301,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762181411864</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py.">
+      <option name="closed" value="true" />
+      <created>1762434994229</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1762434994229</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -333,6 +341,7 @@
     <MESSAGE value="Added more methods to DayViewGUI class, removed inner methods in day DayViewGUI_Class" />
     <MESSAGE value="Added AgendaViewGUI Class and updated other classes." />
     <MESSAGE value="Debugged database, fix:made ID's consistent between event instances." />
-    <option name="LAST_COMMIT_MESSAGE" value="Debugged database, fix:made ID's consistent between event instances." />
+    <MESSAGE value="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py." />
+    <option name="LAST_COMMIT_MESSAGE" value="Debugged AgendaView, Refractored the MonthViewGUI_Class.py and MonthCalendar_Class.py. Removed data processing from GUI classes and added it to Calendar_Class.py." />
   </component>
 </project>
