@@ -1,5 +1,5 @@
 import tkinter as tk
-from Calendar_Class import Calendar
+from CalendarService import CalendarService
 import DayViewGUI_Class
 import WeekViewGUI_Class
 import AgendaViewGUI_Class
@@ -39,7 +39,7 @@ class MonthViewGUI:
             calendar_obj (Calendar, optional): Calendar object for data operations
         """
         # Use provided calendar or create a new one
-        self.calendar = calendar_obj if calendar_obj else Calendar()
+        self.calendar = calendar_obj if calendar_obj else CalendarService()
         self.window = tk.Tk()
         self.window.title("Month View Calendar")
 
@@ -93,24 +93,10 @@ class MonthViewGUI:
 
     def on_closing(self):
         """
-        Handle window closing event. Clean up and close the application.
+        Handle window closing event.
         """
         print("Closing calendar application...")
         self.window.destroy()
-
-    def _get_month_calendar(self, year, month):
-        """
-        With the new architecture, we just return the main calendar object.
-        The calendar can handle multiple months seamlessly.
-
-        Args:
-            year (int): The year for the calendar
-            month (int): The month for the calendar
-
-        Returns:
-            Calendar: The main calendar object
-        """
-        return self.calendar
 
     def refresh_calendar_display(self):
         """
@@ -124,8 +110,6 @@ class MonthViewGUI:
         else:
             year, month = self.current_year, self.current_month
 
-        # Update the current calendar reference using service
-        self.current_calendar = self._get_month_calendar(year, month)
         self.show_month(year, month)
 
     def switch_month(self):
@@ -172,11 +156,32 @@ class MonthViewGUI:
 
     def open_filter(self):
         """
-        Open filter options (placeholder function).
-        TODO: Implement filtering functionality for events.
+        Open filter dialog and display filtered events in agenda view.
         """
-        print("Filter button clicked - functionality coming soon!")
-        # TODO: Add filter dialog or functionality here
+        try:
+            from FilterDialog_Class import FilterDialog
+            
+            # Open filter dialog
+            filter_dialog = FilterDialog(self.window, self.calendar)
+            self.window.wait_window(filter_dialog.dialog)
+            
+            # If user applied filters, open agenda view with filtered results
+            if filter_dialog.result:
+                # Get all events
+                all_events = self.calendar.get_all_events()
+                
+                # Apply filters
+                filtered_events = self.calendar.filter_events(all_events, filter_dialog.result)
+                
+                # Open agenda view with filtered events
+                AgendaViewGUI_Class.FilteredAgendaViewGUI(
+                    self.calendar, 
+                    filtered_events, 
+                    filter_dialog.result,
+                    parent_gui=self
+                )
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred with filtering: {str(e)}")
 
     def on_day_click(self, year, month, day):
         """

@@ -61,9 +61,6 @@ class WeekViewGUI:
         nav_frame = tk.Frame(self.window)
         nav_frame.grid(row=1, column=0, columnspan=7, pady=5)
 
-        prev_btn = tk.Button(nav_frame, text="Previous Week", command=self.previous_week)
-        prev_btn.pack(side=tk.LEFT, padx=10)
-
         next_btn = tk.Button(nav_frame, text="Next Week", command=self.next_week)
         next_btn.pack(side=tk.RIGHT, padx=10)
 
@@ -83,11 +80,6 @@ class WeekViewGUI:
         """Handle window closing event."""
         self.window.destroy()
 
-    def previous_week(self):
-        """Navigate to the previous week."""
-        self.current_week_start -= datetime.timedelta(days=7)
-        self.show_week()
-
     def next_week(self):
         """Navigate to the next week."""
         self.current_week_start += datetime.timedelta(days=7)
@@ -98,19 +90,6 @@ class WeekViewGUI:
         today = self.calendar.get_today()
         self.current_week_start = self.calendar.calculate_week_start(today)
         self.show_week()
-
-    def get_calendar_for_date(self, date):
-        """
-        Get the calendar object for any date.
-        With the new architecture, we use the main calendar for all dates.
-
-        Args:
-            date (datetime.date): The date to get the calendar for
-
-        Returns:
-            Calendar: The main calendar object
-        """
-        return self.calendar
 
     def on_day_click(self, date):
         """
@@ -201,19 +180,11 @@ class WeekViewGUI:
         for col in range(7):
             self.frame.columnconfigure(col, weight=1)
 
-    def refresh_week_display(self):
-        """
-        Refresh the week display to show updated event highlighting.
-        This method should be called when events are added, modified, or deleted
-        to ensure the week buttons reflect the current state of events.
-        """
-        self.show_week()
-
     def refresh_calendar_display(self):
         """
         Compatibility method for DayViewGUI parent refresh calls.
         Refreshes both the week display and the parent month view if available.
         """
-        self.refresh_week_display()
+        self.show_week()
         if self.parent_gui:
             self.parent_gui.refresh_calendar_display()

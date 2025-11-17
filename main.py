@@ -9,16 +9,20 @@ TODOList
   then that event should be applied to that selected day
 - No need for 11-parameter for one method
 - Refractor
-
 - Configuration file for that database class-recurring events applied to calendar
+- The event class should be the class responsible for creating event objects.
+-Method that are only created to call other methods should be removed.
+The calendar class should s
+The database should only store and retrieve event objects, the program should not be directly
+
 """
-from Calendar_Class import Calendar
+from CalendarService import CalendarService
 from MonthViewGUI_Class import MonthViewGUI
 
 
 def main():
-    # Create calendar instance
-    calendar = Calendar()
+    # Create calendar service instance
+    calendar = CalendarService()
     print("Calendar application started!")
     print("Calendar instance created successfully.")
 

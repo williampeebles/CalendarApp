@@ -203,9 +203,9 @@ class AgendaViewGUI:
         # Add each event as a row in the treeview
         # Events will be displayed in the order they exist in the calendar
         for event in all_events:
-            # Format the date for display (convert from YYYY-MM-DD to readable format)
+            # Format the date for display in DD-MM-YYYY format
             try:
-                # Parse the start date string and format it nicely
+                # Parse the start date string (database format) and convert to DD-MM-YYYY
                 date_obj = datetime.datetime.strptime(event.start_day, "%Y-%m-%d")
                 formatted_date = date_obj.strftime("%b %d, %Y")  # Example: "Nov 02, 2024"
             except ValueError:
@@ -247,37 +247,11 @@ class AgendaViewGUI:
         """
         Get all events from the calendar across multiple months.
 
-        Since the agenda view shows all events, we'll get events from current month
-        and a few months around it to give a comprehensive view.
-
         Returns:
             list: List of all Event objects in the calendar
         """
-        all_events = []
-        today = datetime.date.today()
-
-        # Get events from 6 months before to 6 months after current month
-        for month_offset in range(-6, 7):
-            # Calculate the target month and year
-            target_month = today.month + month_offset
-            target_year = today.year
-
-            # Handle year rollover
-            while target_month <= 0:
-                target_month += 12
-                target_year -= 1
-            while target_month > 12:
-                target_month -= 12
-                target_year += 1
-
-            # Get events for this month
-            month_events = self.calendar.get_events_for_month(target_year, target_month)
-            all_events.extend(month_events)
-
-        # Sort events by date and time
-        all_events.sort(key=lambda event: (event.date, event.start_time))
-
-        return all_events
+        # Delegate to CalendarService which handles the date range logic
+        return self.calendar.get_all_events()
 
     def edit_selected_event(self):
         """Open edit dialog for the selected event."""
@@ -393,3 +367,60 @@ class AgendaViewGUI:
             else:
                 # Show error message if deletion failed
                 tk.messagebox.showerror("Error", message)
+
+
+class FilteredAgendaViewGUI(AgendaViewGUI):
+    """
+    Extended AgendaViewGUI that displays filtered events.
+    Shows events that match specific filter criteria.
+    """
+
+    def __init__(self, calendar_obj, filtered_events, filter_criteria, parent_gui=None):
+        """
+        Initialize the FilteredAgendaViewGUI.
+
+        Args:
+            calendar_obj (Calendar): The calendar object
+            filtered_events (list): Pre-filtered list of Event objects
+            filter_criteria (dict): Dictionary containing applied filter criteria
+            parent_gui (MonthViewGUI, optional): Reference to parent month view
+        """
+        self.filtered_events = filtered_events
+        self.filter_criteria = filter_criteria
+        
+        # Call parent constructor
+        super().__init__(calendar_obj, parent_gui)
+
+    def create_agenda_window(self):
+        """Override to customize title for filtered view."""
+        super().create_agenda_window()
+        
+        # Update window title to indicate filtering
+        filter_desc = self._get_filter_description()
+        self.window.title(f"Filtered Events - {filter_desc}")
+        
+        # Update header label
+        for widget in self.window.winfo_children():
+            if isinstance(widget, tk.Frame):
+                for child in widget.winfo_children():
+                    if isinstance(child, tk.Label) and "Agenda View" in child.cget("text"):
+                        child.config(text=f"Filtered Events\n{filter_desc}")
+                        break
+
+    def _get_filter_description(self):
+        """Generate a human-readable description of applied filters."""
+        parts = []
+        
+        if self.filter_criteria.get('search_text'):
+            parts.append(f"Search: '{self.filter_criteria['search_text']}'")
+        
+        from_date = self.filter_criteria.get('from_date')
+        to_date = self.filter_criteria.get('to_date')
+        if from_date and to_date:
+            parts.append(f"{from_date.strftime('%d-%m-%Y')} to {to_date.strftime('%d-%m-%Y')}")
+        
+        return " | ".join(parts) if parts else "Custom Filter"
+
+    def get_all_events(self):
+        """Override to return pre-filtered events instead of querying all."""
+        return self.filtered_events
