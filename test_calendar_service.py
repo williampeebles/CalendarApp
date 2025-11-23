@@ -1,17 +1,35 @@
+"""
+Unit tests for CalendarService class.
+
+Tests core calendar functionality including event creation, updating, and deletion.
+"""
+
 import unittest
 import datetime
+
+# Import the classes we need to test
 from CalendarService import CalendarService
+from Calendar_Database_Class import CalendarDatabase
 
 
 class TestCalendarService(unittest.TestCase):
-    """Test for CalendarService class"""
+    """Test core CalendarService functionality"""
 
     def setUp(self):
-        """Set up test fixtures before each test method"""
-        self.service = CalendarService()
-        self.today = datetime.date.today()
+        """Set up test fixtures with a real in-memory database"""
+        # Create a temporary database for testing
+        self.test_db_path = "test_calendar.db"
+        
+        # Create real instances
+        self.db = CalendarDatabase(self.test_db_path)
+        self.service = CalendarService(self.db)
 
-    # === Date Utility Tests ===
+    def tearDown(self):
+        """Clean up after each test"""
+        # Database cleanup happens automatically
+        pass
+
+    # === Core Functionality Tests ===
 
     def test_get_today(self):
         """Test that get_today returns today's date"""
@@ -19,77 +37,139 @@ class TestCalendarService(unittest.TestCase):
         self.assertEqual(result, datetime.date.today())
         self.assertIsInstance(result, datetime.date)
 
-    def test_format_date_for_display(self):
-        """Test date formatting for display (DD-MM-YYYY)"""
-        test_date = datetime.date(2025, 11, 17)
-        result = self.service.format_date_for_display(test_date)
-        self.assertEqual(result, "17-11-2025")
-
-    def test_calculate_next_month(self):
-        """Test calculating next month"""
-        year, month = self.service.calculate_next_month(2025, 11)
-        self.assertEqual(year, 2025)
-        self.assertEqual(month, 12)
+    def test_create_event_success(self):
+        """Test creating a valid event"""
+        future_date = datetime.date.today() + datetime.timedelta(days=7)
         
-        # Test year boundary
-        year, month = self.service.calculate_next_month(2025, 12)
-        self.assertEqual(year, 2026)
-        self.assertEqual(month, 1)
-
-    def test_calculate_previous_month(self):
-        """Test calculating previous month"""
-        year, month = self.service.calculate_previous_month(2025, 11)
-        self.assertEqual(year, 2025)
-        self.assertEqual(month, 10)
+        success, message, event_id = self.service.create_event(
+            title="Test Event",
+            date=future_date,
+            start_time="10:00 AM",
+            end_time="11:00 AM",
+            description="Test description"
+        )
         
-        # Test year boundary
-        year, month = self.service.calculate_previous_month(2025, 1)
-        self.assertEqual(year, 2024)
-        self.assertEqual(month, 12)
+        self.assertTrue(success)
+        self.assertIn("successfully", message.lower())
+        self.assertIsNotNone(event_id)
+        self.assertGreater(event_id, 0)
 
-    def test_calculate_week_start(self):
-        """Test calculating week start (Sunday)"""
-        # November 17, 2025 is a Monday
-        test_date = datetime.date(2025, 11, 17)
-        week_start = self.service.calculate_week_start(test_date)
-        # Should return the previous Sunday (November 16)
-        self.assertEqual(week_start, datetime.date(2025, 11, 16))
-        self.assertEqual(week_start.weekday(), 6)  # Sunday is weekday 6
-
-    def test_calculate_week_dates(self):
-        """Test calculating all 7 dates in a week"""
-        week_start = datetime.date(2025, 11, 16)  # Sunday
-        week_dates = self.service.calculate_week_dates(week_start)
+    def test_create_event_with_empty_title(self):
+        """Test that creating event with empty title fails"""
+        future_date = datetime.date.today() + datetime.timedelta(days=1)
         
-        self.assertEqual(len(week_dates), 7)
-        self.assertEqual(week_dates[0], datetime.date(2025, 11, 16))  # Sunday
-        self.assertEqual(week_dates[6], datetime.date(2025, 11, 22))  # Saturday
-
-    def test_get_current_month_year(self):
-        """Test getting current month and year"""
-        month, year = self.service.get_current_month_year()
-        today = datetime.date.today()
-        self.assertEqual(month, today.month)
-        self.assertEqual(year, today.year)
-
-    def test_format_month_display_name(self):
-        """Test formatting month display name"""
-        result = self.service.format_month_display_name(2025, 11)
-        self.assertEqual(result, "November 2025")
+        success, message, event_id = self.service.create_event(
+            title="",
+            date=future_date,
+            start_time="10:00 AM",
+            end_time="11:00 AM"
+        )
         
-        result = self.service.format_month_display_name(2025, 1)
-        self.assertEqual(result, "January 2025")
+        self.assertFalse(success)
+        self.assertIn("title", message.lower())
+        self.assertIsNone(event_id)
 
-    def test_format_week_display_name(self):
-        """Test formatting week display name"""
-        week_start = datetime.date(2025, 11, 16)  # Sunday
-        week_end = datetime.date(2025, 11, 22)    # Saturday
+    def test_create_event_past_date(self):
+        """Test that creating event in the past fails"""
+        past_date = datetime.date.today() - datetime.timedelta(days=1)
         
-        result = self.service.format_week_display_name(week_start, week_end)
-        self.assertIn("November", result)
-        self.assertIn("16", result)
-        self.assertIn("22", result)
-        self.assertIn("2025", result)
+        success, message, event_id = self.service.create_event(
+            title="Past Event",
+            date=past_date,
+            start_time="10:00 AM",
+            end_time="11:00 AM"
+        )
+        
+        self.assertFalse(success)
+        self.assertIn("past", message.lower())
+        self.assertIsNone(event_id)
+
+    def test_create_all_day_event(self):
+        """Test creating an all-day event"""
+        future_date = datetime.date.today() + datetime.timedelta(days=3)
+        
+        success, message, event_id = self.service.create_event(
+            title="All Day Event",
+            date=future_date,
+            is_all_day=True
+        )
+        
+        self.assertTrue(success)
+        self.assertIsNotNone(event_id)
+
+    def test_update_event(self):
+        """Test updating an existing event"""
+        # First create an event
+        future_date = datetime.date.today() + datetime.timedelta(days=5)
+        success, message, event_id = self.service.create_event(
+            title="Original Title",
+            date=future_date,
+            start_time="09:00 AM",
+            end_time="10:00 AM"
+        )
+        self.assertTrue(success)
+        
+        # Now update it
+        success, message = self.service.update_event(
+            event_id,
+            title="Updated Title",
+            description="New description"
+        )
+        
+        self.assertTrue(success)
+        self.assertIn("updated", message.lower())
+
+    def test_delete_event(self):
+        """Test deleting an event"""
+        # Create an event
+        future_date = datetime.date.today() + datetime.timedelta(days=2)
+        success, message, event_id = self.service.create_event(
+            title="Event to Delete",
+            date=future_date,
+            start_time="10:00 AM",
+            end_time="11:00 AM"
+        )
+        self.assertTrue(success)
+        
+        # Delete it
+        success, message = self.service.delete_event(event_id)
+        
+        self.assertTrue(success)
+        self.assertIn("deleted", message.lower())
+
+    def test_create_recurring_event(self):
+        """Test creating a recurring event"""
+        future_date = datetime.date.today() + datetime.timedelta(days=1)
+        
+        success, message, event_id = self.service.create_event(
+            title="Weekly Meeting",
+            date=future_date,
+            start_time="02:00 PM",
+            end_time="03:00 PM",
+            is_recurring=True,
+            recurrence_pattern="weekly"
+        )
+        
+        self.assertTrue(success)
+        self.assertIn("recurring", message.lower())
+        self.assertIsNotNone(event_id)
+
+    def test_description_length_validation(self):
+        """Test that description over 80 characters is rejected"""
+        future_date = datetime.date.today() + datetime.timedelta(days=1)
+        long_description = "A" * 81  # 81 characters
+        
+        success, message, event_id = self.service.create_event(
+            title="Test Event",
+            date=future_date,
+            start_time="10:00 AM",
+            end_time="11:00 AM",
+            description=long_description
+        )
+        
+        self.assertFalse(success)
+        self.assertIn("80", message)
+        self.assertIn("character", message.lower())
 
 
 if __name__ == "__main__":

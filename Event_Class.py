@@ -186,3 +186,109 @@ class Event(object):
         if not isinstance(value, bool):
             raise TypeError("is_all_day must be a boolean")
         self._is_all_day = value
+
+    @classmethod
+    def from_dict(cls, event_dict):
+        """
+        Create an Event object from a dictionary (e.g., from database).
+        This is a factory method that the Event class uses to create itself.
+
+        Args:
+            event_dict (dict): Dictionary containing event data with keys:
+                - event_id, title, date, start_day, end_day,
+                - start_time, end_time, description, is_recurring,
+                - recurrence_pattern, is_all_day
+
+        Returns:
+            Event: A new Event object created from the dictionary
+
+        Example:
+            event = Event.from_dict({
+                'event_id': 1,
+                'title': 'Meeting',
+                'date': '2025-11-22',
+                ...
+            })
+        """
+        return cls(
+            event_id=event_dict['event_id'],
+            title=event_dict['title'],
+            date=event_dict['date'],
+            start_day=event_dict['start_day'],
+            end_day=event_dict['end_day'],
+            start_time=event_dict['start_time'],
+            end_time=event_dict['end_time'],
+            description=event_dict.get('description', ''),
+            is_recurring=event_dict.get('is_recurring', False),
+            recurrence_pattern=event_dict.get('recurrence_pattern'),
+            is_all_day=event_dict.get('is_all_day', False)
+        )
+
+    @classmethod
+    def create_new(cls, title, date, start_time="", end_time="", 
+                   description="", is_all_day=False, is_recurring=False, 
+                   recurrence_pattern=None):
+        """
+        Create a new Event object (without event_id - will be assigned by database).
+        This is a factory method for creating new events before they're saved.
+
+        Args:
+            title (str): Event title
+            date (str): Event date in YYYY-MM-DD format
+            start_time (str): Start time (optional for all-day events)
+            end_time (str): End time (optional for all-day events)
+            description (str): Event description
+            is_all_day (bool): Whether this is an all-day event
+            is_recurring (bool): Whether this event repeats
+            recurrence_pattern (str): How the event repeats (if recurring)
+
+        Returns:
+            Event: A new Event object ready to be saved
+
+        Example:
+            event = Event.create_new(
+                title="Team Meeting",
+                date="2025-11-22",
+                start_time="10:00 AM",
+                end_time="11:00 AM"
+            )
+        """
+        return cls(
+            event_id=None,  # Will be assigned by database
+            title=title,
+            date=date,
+            start_day=date,  # For single-day events, same as date
+            end_day=date,    # For single-day events, same as date
+            start_time=start_time,
+            end_time=end_time,
+            description=description,
+            is_recurring=is_recurring,
+            recurrence_pattern=recurrence_pattern,
+            is_all_day=is_all_day
+        )
+
+    def to_dict(self):
+        """
+        Convert this Event object to a dictionary.
+        Useful for database operations and serialization.
+
+        Returns:
+            dict: Dictionary representation of the event
+
+        Example:
+            event_dict = event.to_dict()
+            # Can be used with database operations
+        """
+        return {
+            'event_id': self.event_id,
+            'title': self.title,
+            'date': self.date,
+            'start_day': self.start_day,
+            'end_day': self.end_day,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'description': self.description,
+            'is_recurring': self.is_recurring,
+            'recurrence_pattern': self.recurrence_pattern,
+            'is_all_day': self.is_all_day
+        }

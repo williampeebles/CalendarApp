@@ -3,6 +3,7 @@ import datetime
 import calendar
 import tkinter.messagebox as messagebox
 import DayViewGUI_Class
+from WeekViewService_Class import WeekViewService
 
 
 class WeekViewGUI:
@@ -35,6 +36,7 @@ class WeekViewGUI:
         """
         # Store the calendar object for all operations
         self.calendar = calendar_obj
+        self.week_service = WeekViewService(self.calendar)
         self.selected_date = datetime.date(year, month, day)
         self.parent_gui = parent_gui
 
@@ -42,7 +44,7 @@ class WeekViewGUI:
         self.today = self.calendar.get_today()
 
         # Calculate the start of the week using service
-        self.current_week_start = self.calendar.calculate_week_start(self.selected_date)
+        self.current_week_start = self.week_service.calculate_week_start(self.selected_date)
 
         self.create_week_view_window()
 
@@ -88,7 +90,7 @@ class WeekViewGUI:
     def go_to_current_week(self):
         """Navigate to the current week containing today's date."""
         today = self.calendar.get_today()
-        self.current_week_start = self.calendar.calculate_week_start(today)
+        self.current_week_start = self.week_service.calculate_week_start(today)
         self.show_week()
 
     def on_day_click(self, date):
@@ -129,7 +131,7 @@ class WeekViewGUI:
         week_end = self.current_week_start + datetime.timedelta(days=6)
 
         # Use service for week display formatting
-        header_text = self.calendar.format_week_display_name(self.current_week_start, week_end)
+        header_text = self.week_service.format_week_display_name(self.current_week_start, week_end)
         self.header.config(text=header_text)
 
         # Days of the week headers
@@ -151,7 +153,7 @@ class WeekViewGUI:
                 fg = "black"
 
             # Check for events using the new calendar system
-            has_events = self.calendar.has_events_on_date(current_date)
+            has_events = self.week_service.has_events_on_date(current_date)
             bg_color = "yellow" if has_events else None
 
             # Create button text with date and day
@@ -159,7 +161,7 @@ class WeekViewGUI:
 
             # Add event count if there are events
             if has_events:
-                events_on_date = self.calendar.get_events_for_date(current_date)
+                events_on_date = self.week_service.get_events_for_date(current_date)
                 event_count = len(events_on_date)
                 button_text += f"\n({event_count} event{'s' if event_count != 1 else ''})"
 

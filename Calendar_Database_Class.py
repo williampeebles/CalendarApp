@@ -296,3 +296,56 @@ class CalendarDatabase:
                 raise ValueError(f"Event with id {event_id} not found")
             
             return True
+
+    def get_recurring_instances(self, title, recurrence_pattern, start_date):
+        """
+        Find all instances of a recurring event.
+
+        Args:
+            title (str): Event title
+            recurrence_pattern (str): The recurrence pattern
+            start_date (str): The date of the first occurrence (YYYY-MM-DD)
+
+        Returns:
+            List[dict]: List of all recurring event instances
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT event_id, title, description, date, start_day, end_day,
+                       start_time, end_time, is_all_day, is_recurring, recurrence_pattern
+                FROM events 
+                WHERE title = ? 
+                  AND is_recurring = 1 
+                  AND recurrence_pattern = ?
+                  AND date >= ?
+                ORDER BY date
+            ''', (title, recurrence_pattern, start_date))
+            
+            rows = cursor.fetchall()
+            return [self._row_to_dict(row) for row in rows]
+
+    def delete_recurring_instances(self, title, recurrence_pattern, start_date):
+        """
+        Delete all instances of a recurring event.
+
+        Args:
+            title (str): Event title
+            recurrence_pattern (str): The recurrence pattern
+            start_date (str): The date of the first occurrence (YYYY-MM-DD)
+
+        Returns:
+            int: Number of events deleted
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                DELETE FROM events 
+                WHERE title = ? 
+                  AND is_recurring = 1 
+                  AND recurrence_pattern = ?
+                  AND date >= ?
+            ''', (title, recurrence_pattern, start_date))
+            deleted_count = cursor.rowcount
+            conn.commit()
+            return deleted_count

@@ -2,6 +2,7 @@ import tkinter as tk
 
 import datetime
 from tkcalendar import DateEntry
+from DayViewService_Class import DayViewService
 
 
 class DayViewGUI:
@@ -47,6 +48,7 @@ class DayViewGUI:
         """
         # Store the calendar object for all event operations
         self.calendar = calendar_obj
+        self.day_service = DayViewService(self.calendar)
 
         # Create a date object from the year, month, day numbers passed in
         # This converts separate numbers (2024, 11, 15) into a single date object
@@ -77,7 +79,7 @@ class DayViewGUI:
 
         header_label = tk.Label(
             header_frame,
-            text=self.calendar.format_date_for_display(self.selected_date),
+            text=self.day_service.format_date_for_display(self.selected_date),
             font=self.HEADER_FONT
         )
         header_label.pack()
@@ -116,7 +118,7 @@ class DayViewGUI:
     def refresh_events_list(self):
         """Refresh the events listbox with current events for the selected date."""
         self.events_listbox.delete(0, tk.END)
-        self.current_events = self.calendar.get_events_for_date(self.selected_date)
+        self.current_events = self.day_service.get_events_for_date(self.selected_date)
 
         if not self.current_events:
             self.events_listbox.insert(tk.END, "No events scheduled for this day")
@@ -287,6 +289,23 @@ class DayViewGUI:
         # Text widget allows multiple lines of text input (unlike Entry which is single line)
         description_text = tk.Text(fields_frame, font=("Arial", 10), width=30, height=4)
         description_text.grid(row=6, column=1, columnspan=2, pady=5, padx=5, sticky="w")
+        
+        # Character counter for description (80 character limit)
+        char_count_label = tk.Label(fields_frame, text="0/80 characters", font=("Arial", 8), fg="gray")
+        char_count_label.grid(row=7, column=1, sticky="w", padx=5)
+        
+        # Update character count as user types
+        def update_char_count(event=None):
+            text = description_text.get("1.0", tk.END).strip()
+            count = len(text)
+            char_count_label.config(text=f"{count}/80 characters")
+            # Change color if over limit
+            if count > 80:
+                char_count_label.config(fg="red")
+            else:
+                char_count_label.config(fg="gray")
+        
+        description_text.bind("<KeyRelease>", update_char_count)
 
         # Create variable to store whether this is a recurring event
         recurring_var = tk.BooleanVar()
@@ -300,7 +319,9 @@ class DayViewGUI:
             'end_time_entry': end_time_entry,
             'all_day_var': all_day_var,
             'description_text': description_text,
-            'recurring_var': recurring_var
+            'recurring_var': recurring_var,
+            'char_count_label': char_count_label,
+            'update_char_count': update_char_count
         }
 
         return fields_frame, form_fields
@@ -324,11 +345,11 @@ class DayViewGUI:
             font=("Arial", 10),
             command=lambda: self.toggle_recurrence_options(recurring_var.get(), recurrence_frame)
         )
-        recurring_check.grid(row=7, column=1, sticky="w", pady=5)
+        recurring_check.grid(row=8, column=1, sticky="w", pady=5)
 
         # Recurrence options frame (initially hidden)
         recurrence_frame = tk.LabelFrame(fields_frame, text="Recurrence Options", font=("Arial", 9, "bold"))
-        recurrence_frame.grid(row=8, column=0, columnspan=3, sticky="ew", pady=10, padx=5)
+        recurrence_frame.grid(row=9, column=0, columnspan=3, sticky="ew", pady=10, padx=5)
         recurrence_frame.grid_remove()  # Hide initially
 
         # Recurrence pattern selection
@@ -398,6 +419,10 @@ class DayViewGUI:
             form_fields['end_time_entry'].insert(0, existing_event.end_time)
 
         form_fields['description_text'].insert("1.0", existing_event.description)
+        
+        # Update character counter after inserting description
+        if 'update_char_count' in form_fields:
+            form_fields['update_char_count']()
 
         # Set recurrence options
         form_fields['recurring_var'].set(existing_event.is_recurring)
@@ -450,7 +475,7 @@ class DayViewGUI:
 
         if event_index is not None:
             selected_event = self.current_events[event_index]
-            success, message = self.calendar.update_event(
+            success, message = self.day_service.update_event(
                 selected_event.event_id,
                 title=form_data['title'],
                 date=form_data['start_date'],
@@ -462,7 +487,7 @@ class DayViewGUI:
                 is_all_day=form_data['is_all_day']
             )
         else:
-            success, message, event_id = self.calendar.create_event(
+            success, message, event_id = self.day_service.create_event(
                 form_data['title'], form_data['start_date'], form_data['start_time'], form_data['end_time'],
                 form_data['description'], form_data['is_all_day'], form_data['is_recurring'], form_data['recurrence_pattern']
             )
@@ -508,18 +533,36 @@ class DayViewGUI:
 
         selected_event = self.current_events[selected_index]
 
-        confirm = tk.messagebox.askyesno(
-            "Confirm Delete",
-            f"Are you sure you want to delete the event '{selected_event.title}'?"
-        )
+        # Check if it's a recurring event
+        delete_all = False
+        if selected_event.is_recurring:
+            # Ask user if they want to delete all instances
+            response = tk.messagebox.askyesnocancel(
+                "Delete Recurring Event",
+                f"'{selected_event.title}' is a recurring event.\n\n"
+                f"Yes = Delete ALL occurrences ({selected_event.recurrence_pattern})\n"
+                f"No = Delete only THIS occurrence\n"
+                f"Cancel = Don't delete"
+            )
+            
+            if response is None:  # Cancel
+                return
+            delete_all = response  # True = delete all, False = delete single
+        else:
+            # Regular event confirmation
+            confirm = tk.messagebox.askyesno(
+                "Confirm Delete",
+                f"Are you sure you want to delete the event '{selected_event.title}'?"
+            )
+            if not confirm:
+                return
 
-        if confirm:
-            success, message = self.calendar.delete_event(selected_event.event_id)
+        success, message = self.day_service.delete_event(selected_event.event_id, delete_all_recurring=delete_all)
 
-            if success:
-                self.refresh_events_list()
-                if self.parent_gui:
-                    self.parent_gui.refresh_calendar_display()
-                tk.messagebox.showinfo("Success", message)
-            else:
-                tk.messagebox.showerror("Error", message)
+        if success:
+            self.refresh_events_list()
+            if self.parent_gui:
+                self.parent_gui.refresh_calendar_display()
+            tk.messagebox.showinfo("Success", message)
+        else:
+            tk.messagebox.showerror("Error", message)

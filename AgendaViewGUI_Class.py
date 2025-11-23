@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import datetime
+from AgendaViewService_Class import AgendaViewService
 
 
 class AgendaViewGUI:
@@ -28,6 +29,7 @@ class AgendaViewGUI:
         """
         # Store reference to the calendar object for all event operations
         self.calendar = calendar_obj
+        self.agenda_service = AgendaViewService(self.calendar)
 
         # Keep reference to parent window so we can refresh it when events change
         self.parent_gui = parent_gui
@@ -224,10 +226,10 @@ class AgendaViewGUI:
             if event.is_recurring and event.recurrence_pattern:
                 recurring_display += f" ({event.recurrence_pattern})"
 
-            # Truncate description if it's too long to fit nicely in the column
+            # Truncate description to 80 characters max
             description = event.description
-            if len(description) > 50:  # Limit to 50 characters
-                description = description[:47] + "..."  # Add ... to show it's truncated
+            if len(description) > 80:  # Limit to 80 characters
+                description = description[:77] + "..."  # Add ... to show it's truncated
 
             # Insert the event data as a new row in the treeview
             # "" means insert at root level, "end" means add to end of list
@@ -250,8 +252,8 @@ class AgendaViewGUI:
         Returns:
             list: List of all Event objects in the calendar
         """
-        # Delegate to CalendarService which handles the date range logic
-        return self.calendar.get_all_events()
+        # Delegate to AgendaViewService which handles the date range logic
+        return self.agenda_service.get_all_events()
 
     def edit_selected_event(self):
         """Open edit dialog for the selected event."""
@@ -275,7 +277,7 @@ class AgendaViewGUI:
             return
 
         # Get the actual event object using the event_id
-        event_obj = self.calendar.get_event_by_id(event_id)
+        event_obj = self.agenda_service.get_event_by_id(event_id)
 
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
@@ -334,7 +336,7 @@ class AgendaViewGUI:
             return
 
         # Get the actual event object using the event_id
-        event_obj = self.calendar.get_event_by_id(event_id)
+        event_obj = self.agenda_service.get_event_by_id(event_id)
 
         if not event_obj:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
@@ -350,7 +352,7 @@ class AgendaViewGUI:
         # Only proceed if user confirmed they want to delete
         if confirm:
             # Delete event using the new calendar system
-            success, message = self.calendar.delete_event(event_id)
+            success, message = self.agenda_service.delete_event(event_id)
 
             # Check if the deletion was successful
             if success:

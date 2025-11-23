@@ -1,7 +1,9 @@
 import tkinter as tk
 import datetime
 from tkcalendar import DateEntry
+from tkinter import messagebox
 import calendar
+from Filter_Service_Class import FilterService
 
 class FilterDialog:
     """
@@ -22,6 +24,7 @@ class FilterDialog:
             calendar_service: CalendarService instance
         """
         self.calendar = calendar_service
+        self.filter_service = FilterService()
         self.result = None  # Will store filter criteria
         
         self.dialog = tk.Toplevel(parent)
@@ -124,6 +127,13 @@ class FilterDialog:
             'show_timed': self.show_timed.get(),
             'show_recurring': self.show_recurring.get()
         }
+        
+        # Validate filter criteria using FilterService
+        validation_errors = self.filter_service.validate_filter_criteria(self.result)
+        if validation_errors:
+            messagebox.showerror("Invalid Filter", "\n".join(validation_errors))
+            return
+        
         self.dialog.destroy()
     
     def clear_filters(self):

@@ -1,5 +1,6 @@
 import tkinter as tk
 from CalendarService import CalendarService
+from MonthViewService_Class import MonthViewService
 import DayViewGUI_Class
 import WeekViewGUI_Class
 import AgendaViewGUI_Class
@@ -40,6 +41,7 @@ class MonthViewGUI:
         """
         # Use provided calendar or create a new one
         self.calendar = calendar_obj if calendar_obj else CalendarService()
+        self.month_service = MonthViewService(self.calendar)
         self.window = tk.Tk()
         self.window.title("Month View Calendar")
 
@@ -121,7 +123,7 @@ class MonthViewGUI:
         """
         self.showing_next = not self.showing_next
         if self.showing_next:
-            year, month = self.calendar.calculate_next_month(self.current_year, self.current_month)
+            year, month = self.month_service.calculate_next_month(self.current_year, self.current_month)
             self.switch_btn.config(text="Show This Month")
         else:
             year, month = self.current_year, self.current_month
@@ -168,7 +170,7 @@ class MonthViewGUI:
             # If user applied filters, open agenda view with filtered results
             if filter_dialog.result:
                 # Get all events
-                all_events = self.calendar.get_all_events()
+                all_events = self.month_service.get_events_for_all_months()
                 
                 # Apply filters
                 filtered_events = self.calendar.filter_events(all_events, filter_dialog.result)
@@ -229,7 +231,7 @@ class MonthViewGUI:
             widget.destroy()
 
         # Use service for month display formatting
-        self.header.config(text=self.calendar.format_month_display_name(year, month))
+        self.header.config(text=self.month_service.format_month_display_name(year, month))
 
         days_of_the_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         col = 0
@@ -266,7 +268,7 @@ class MonthViewGUI:
 
                     # Check for events using service
                     current_date = datetime.date(year, month, day_num)
-                    has_events = self.calendar.has_events_on_date(current_date)
+                    has_events = self.month_service.has_events_on_date(current_date)
                     bg_color = "yellow" if has_events else None
                     # Create clickable day button
                     day_button = tk.Button(
