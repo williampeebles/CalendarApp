@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 import datetime
 from tkcalendar import DateEntry
@@ -34,6 +35,30 @@ class DayViewGUI:
     FRAME_PADDING = 10
     DEFAULT_START_TIME = "09:00 AM"
     DEFAULT_END_TIME = "10:00 AM"
+    
+    @staticmethod
+    def generate_time_options():
+        """Generate time options in 30-minute increments for 24 hours."""
+        times = []
+        for hour in range(24):
+            for minute in [0, 30]:
+                # Convert to 12-hour format
+                if hour == 0:
+                    display_hour = 12
+                    period = "AM"
+                elif hour < 12:
+                    display_hour = hour
+                    period = "AM"
+                elif hour == 12:
+                    display_hour = 12
+                    period = "PM"
+                else:
+                    display_hour = hour - 12
+                    period = "PM"
+                
+                time_str = f"{display_hour:02d}:{minute:02d} {period}"
+                times.append(time_str)
+        return times
 
     def __init__(self, calendar_obj, year, month, day, parent_gui=None):
         """
@@ -253,21 +278,24 @@ class DayViewGUI:
         # Default end date is same as start date (single day event)
         end_date_entry.set_date(self.selected_date)
 
-        # Create label and input field for event start time
+        # Create label and dropdown menu for event start time
         tk.Label(fields_frame, text="Start Time:", font=("Arial", 10, "bold")).grid(row=3, column=0, sticky="w", pady=5)
-        # Regular text entry for start time (user types "9:00 AM" format)
-        start_time_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
+        # Combobox (dropdown) for start time with 30-minute increments
+        time_options = self.generate_time_options()
+        start_time_entry = ttk.Combobox(fields_frame, font=("Arial", 10), width=13, 
+                                        values=time_options, state="readonly")
         start_time_entry.grid(row=3, column=1, pady=5, padx=5, sticky="w")
-        # Pre-fill with default start time of 9:00 AM
-        start_time_entry.insert(0, "09:00 AM")
+        # Set default start time of 9:00 AM
+        start_time_entry.set("09:00 AM")
 
-        # Create label and input field for event end time
+        # Create label and dropdown menu for event end time
         tk.Label(fields_frame, text="End Time:", font=("Arial", 10, "bold")).grid(row=4, column=0, sticky="w", pady=5)
-        # Regular text entry for end time
-        end_time_entry = tk.Entry(fields_frame, font=("Arial", 10), width=15)
+        # Combobox (dropdown) for end time with 30-minute increments
+        end_time_entry = ttk.Combobox(fields_frame, font=("Arial", 10), width=13,
+                                      values=time_options, state="readonly")
         end_time_entry.grid(row=4, column=1, pady=5, padx=5, sticky="w")
-        # Pre-fill with default end time of 10:00 AM (1 hour event)
-        end_time_entry.insert(0, "10:00 AM")
+        # Set default end time of 10:00 AM (1 hour event)
+        end_time_entry.set("10:00 AM")
 
         # Create checkbox for "All Day Event" option
         # BooleanVar() stores True/False value for checkbox state
@@ -505,17 +533,13 @@ class DayViewGUI:
         if all_day_var.get():
             start_time_entry.config(state='disabled')
             end_time_entry.config(state='disabled')
-            start_time_entry.delete(0, tk.END)
-            start_time_entry.insert(0, "All Day")
-            end_time_entry.delete(0, tk.END)
-            end_time_entry.insert(0, "All Day")
+            start_time_entry.set("All Day")
+            end_time_entry.set("All Day")
         else:
-            start_time_entry.config(state='normal')
-            end_time_entry.config(state='normal')
-            start_time_entry.delete(0, tk.END)
-            start_time_entry.insert(0, self.DEFAULT_START_TIME)
-            end_time_entry.delete(0, tk.END)
-            end_time_entry.insert(0, self.DEFAULT_END_TIME)
+            start_time_entry.config(state='readonly')
+            end_time_entry.config(state='readonly')
+            start_time_entry.set(self.DEFAULT_START_TIME)
+            end_time_entry.set(self.DEFAULT_END_TIME)
 
     def delete_event(self):
         """Delete the selected event after confirmation."""
