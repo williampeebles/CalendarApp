@@ -80,20 +80,23 @@ class CalendarService:
                      description="",
                      is_all_day=False,
                      is_recurring=False,
-                     recurrence_pattern=""):
+                     recurrence_pattern="",
+                     end_date=None):
         """
         Create a new event with validation.
         If recurring, automatically creates instances for the next 6 months.
+        If end_date is different from date, event spans multiple days.
 
         Args:
             title (str): Event title (required)
-            date (datetime.date): Event date (required)
+            date (datetime.date): Event start date (required)
             start_time (str): Start time (optional for all-day events)
             end_time (str): End time (optional for all-day events)
             description (str): Event description (optional)
             is_all_day (bool): Whether this is an all-day event
             is_recurring (bool): Whether this event repeats
             recurrence_pattern (str): How the event repeats (if recurring)
+            end_date (datetime.date): Event end date (optional, defaults to start date)
 
         Returns:
             Tuple[bool, str, Optional[int]]: (success, message, event_id)
@@ -110,8 +113,12 @@ class CalendarService:
             return False, error_message, None
 
         try:
-            # Convert date to string format for database storage
+            # Convert dates to string format for database storage
             date_str = date.strftime(self.DATABASE_DATE_FORMAT)
+            # If no end_date provided, use start date (single-day event)
+            if end_date is None:
+                end_date = date
+            end_date_str = end_date.strftime(self.DATABASE_DATE_FORMAT)
 
             # Handle all-day events
             if is_all_day:
@@ -129,12 +136,12 @@ class CalendarService:
                 else:
                     return False, "Failed to create recurring events", None
             else:
-                # Create single event
+                # Create single event (may span multiple days)
                 event_data = {
                     'title': title,
                     'date': date_str,
                     'start_day': date_str,
-                    'end_day': date_str,
+                    'end_day': end_date_str,
                     'start_time': start_time,
                     'end_time': end_time,
                     'description': description,

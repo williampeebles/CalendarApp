@@ -517,7 +517,8 @@ class DayViewGUI:
         else:
             success, message, event_id = self.day_service.create_event(
                 form_data['title'], form_data['start_date'], form_data['start_time'], form_data['end_time'],
-                form_data['description'], form_data['is_all_day'], form_data['is_recurring'], form_data['recurrence_pattern']
+                form_data['description'], form_data['is_all_day'], form_data['is_recurring'], form_data['recurrence_pattern'],
+                form_data['end_date']
             )
 
         if success:

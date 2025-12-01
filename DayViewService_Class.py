@@ -65,27 +65,29 @@ class DayViewService:
                      description="",
                      is_all_day=False,
                      is_recurring=False,
-                     recurrence_pattern=""):
+                     recurrence_pattern="",
+                     end_date=None):
         """
         Create a new event with validation.
         Delegates to CalendarService for the actual creation.
 
         Args:
             title (str): Event title (required)
-            date (datetime.date): Event date (required)
+            date (datetime.date): Event start date (required)
             start_time (str): Start time (optional for all-day events)
             end_time (str): End time (optional for all-day events)
             description (str): Event description (optional)
             is_all_day (bool): Whether this is an all-day event
             is_recurring (bool): Whether this event repeats
             recurrence_pattern (str): How the event repeats (if recurring)
+            end_date (datetime.date): Event end date (optional, defaults to start date)
 
         Returns:
             Tuple[bool, str, Optional[int]]: (success, message, event_id)
         """
         return self.calendar_service.create_event(
             title, date, start_time, end_time, description,
-            is_all_day, is_recurring, recurrence_pattern
+            is_all_day, is_recurring, recurrence_pattern, end_date
         )
     
     def update_event(self,
