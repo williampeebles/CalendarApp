@@ -237,7 +237,8 @@ class MonthViewGUI:
         col = 0
         while col < 7:
             tk.Label(self.frame, text=days_of_the_week[col], width=15, height=2,
-                     font=("Arial", 10, "bold"), relief="ridge", bd=1).grid(row=0, column=col)
+                     font=("Arial", 10, "bold"), relief="ridge", bd=1).grid(row=0, column=col, sticky="nsew")
+            self.frame.columnconfigure(col, weight=1, minsize=105)
             col += 1
 
         first_weekday, num_days = calendar.monthrange(year, month)
@@ -254,8 +255,9 @@ class MonthViewGUI:
 
                 # Check if we're before the first day of the month
                 if current_pos < start_col:
-                    # Empty button for days before the month starts
-                    tk.Button(self.frame, text="", width=15, height=7, state="disabled").grid(row=row, column=col)
+                    # Empty frame for days before the month starts
+                    empty_frame = tk.Frame(self.frame, bg="SystemButtonFace", height=105, relief="raised", bd=2)
+                    empty_frame.grid(row=row, column=col, sticky="nsew")
 
                 # Check if we're within the days of the current month
                 elif day_num <= num_days:
@@ -270,26 +272,40 @@ class MonthViewGUI:
                     current_date = datetime.date(year, month, day_num)
                     has_events = self.month_service.has_events_on_date(current_date)
                     bg_color = "yellow" if has_events else None
-                    # Create clickable day button
-                    day_button = tk.Button(
-                        self.frame,
-                        text=day_num,
-                        anchor="ne",
-                        width=15,
-                        height=7,
-                        fg=fg,
-                        bg=bg_color,
-                        command=lambda y=year, m=month, d=day_num: self.on_day_click(y, m, d)
-                    )
+                    
+                    # Create a frame to hold button content
+                    day_frame = tk.Frame(self.frame, bg=bg_color if bg_color else "SystemButtonFace", 
+                                        height=105, relief="raised", bd=2)
+                    day_frame.grid(row=row, column=col, sticky="nsew")
+                    
+                    # Make the frame clickable
+                    day_frame.bind("<Button-1>", lambda e, y=year, m=month, d=day_num: self.on_day_click(y, m, d))
+                    
+                    # Add day number in top right corner
+                    day_label = tk.Label(day_frame, text=str(day_num), fg=fg, bg=bg_color if bg_color else "SystemButtonFace",
+                                        font=("Arial", 10))
+                    day_label.place(relx=0.95, rely=0.05, anchor="ne")
+                    day_label.bind("<Button-1>", lambda e, y=year, m=month, d=day_num: self.on_day_click(y, m, d))
+                    
+                    # Add event count in center if there are events
+                    if has_events:
+                        events_on_date = self.month_service.get_events_for_date(current_date)
+                        event_count = len(events_on_date)
+                        event_text = f"({event_count} event{'s' if event_count != 1 else ''})"
+                        event_label = tk.Label(day_frame, text=event_text, bg=bg_color, fg="black",
+                                              font=("Arial", 9))
+                        event_label.place(relx=0.5, rely=0.5, anchor="center")
+                        event_label.bind("<Button-1>", lambda e, y=year, m=month, d=day_num: self.on_day_click(y, m, d))
+                    
                     # Add right-click context menu for week view option
-                    day_button.bind("<Button-3>",
+                    day_frame.bind("<Button-3>",
                                     lambda e, y=year, m=month, d=day_num: self.show_context_menu(e, y, m, d))
-                    day_button.grid(row=row, column=col)
                     day_num += 1
 
-                # Empty button for days after the month ends
+                # Empty frame for days after the month ends
                 else:
-                    tk.Button(self.frame, text="", width=15, height=7, state="disabled").grid(row=row, column=col)
+                    empty_frame = tk.Frame(self.frame, bg="SystemButtonFace", height=105, relief="raised", bd=2)
+                    empty_frame.grid(row=row, column=col, sticky="nsew")
 
             row += 1
             # Stop creating rows if we've placed all days and filled the current row

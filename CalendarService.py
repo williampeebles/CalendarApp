@@ -162,7 +162,7 @@ class CalendarService:
 
     def _create_recurring_events(self, title, start_date, start_time, end_time,
                                  description, is_all_day, recurrence_pattern,
-                                 num_occurrences=26):
+                                 num_occurrences=30):
         """
         Create multiple event instances based on recurrence pattern.
 
@@ -174,7 +174,7 @@ class CalendarService:
             description (str): Event description
             is_all_day (bool): Whether it's an all-day event
             recurrence_pattern (str): 'daily', 'weekly', 'monthly', or 'yearly'
-            num_occurrences (int): Number of instances to create (default 26 weeks/6 months)
+            num_occurrences (int): Number of instances to create (default 30)
 
         Returns:
             list: List of created event IDs

@@ -526,6 +526,7 @@ class DayViewGUI:
             if self.parent_gui:
                 self.parent_gui.refresh_calendar_display()
             dialog.destroy()
+            tk.messagebox.showinfo("Success", message)
         else:
             tk.messagebox.showerror("Error", message)
 
