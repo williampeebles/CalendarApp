@@ -99,7 +99,8 @@ class DayViewService:
                      description=None,
                      is_all_day=None,
                      is_recurring=None,
-                     recurrence_pattern=None):
+                     recurrence_pattern=None,
+                     end_date=None):
         """
         Update an existing event.
         Delegates to CalendarService for the actual update.
@@ -107,13 +108,14 @@ class DayViewService:
         Args:
             event_id (int): ID of the event to update
             Other parameters: New values (None means don't change)
+            end_date (datetime.date): New end date for multi-day events
 
         Returns:
             Tuple[bool, str]: (success, message)
         """
         return self.calendar_service.update_event(
             event_id, title, date, start_time, end_time, 
-            description, is_all_day, is_recurring, recurrence_pattern
+            description, is_all_day, is_recurring, recurrence_pattern, end_date
         )
     
     def delete_event(self, event_id, delete_all_recurring=False):

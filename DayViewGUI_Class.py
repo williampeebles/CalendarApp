@@ -512,7 +512,8 @@ class DayViewGUI:
                 description=form_data['description'],
                 is_recurring=form_data['is_recurring'],
                 recurrence_pattern=form_data['recurrence_pattern'],
-                is_all_day=form_data['is_all_day']
+                is_all_day=form_data['is_all_day'],
+                end_date=form_data['end_date']
             )
         else:
             success, message, event_id = self.day_service.create_event(
@@ -522,10 +523,10 @@ class DayViewGUI:
             )
 
         if success:
+            dialog.destroy()
             self.refresh_events_list()
             if self.parent_gui:
                 self.parent_gui.refresh_calendar_display()
-            dialog.destroy()
             tk.messagebox.showinfo("Success", message)
         else:
             tk.messagebox.showerror("Error", message)

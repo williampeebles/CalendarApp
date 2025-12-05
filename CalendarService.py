@@ -246,13 +246,15 @@ class CalendarService:
                      description=None,
                      is_all_day=None,
                      is_recurring=None,
-                     recurrence_pattern=None):
+                     recurrence_pattern=None,
+                     end_date=None):
         """
         Update an existing event.
 
         Args:
             event_id (int): ID of the event to update
             Other parameters: New values (None means don't change)
+            end_date (datetime.date): New end date for multi-day events
 
         Returns:
             Tuple[bool, str]: (success, message)
@@ -269,7 +271,12 @@ class CalendarService:
             date_str = date.strftime(self.DATABASE_DATE_FORMAT)
             event_dict['date'] = date_str
             event_dict['start_day'] = date_str
-            event_dict['end_day'] = date_str
+            # Only update end_day if end_date is not separately provided
+            if end_date is None:
+                event_dict['end_day'] = date_str
+        if end_date is not None:
+            end_date_str = end_date.strftime(self.DATABASE_DATE_FORMAT)
+            event_dict['end_day'] = end_date_str
         if start_time is not None:
             event_dict['start_time'] = start_time
         if end_time is not None:

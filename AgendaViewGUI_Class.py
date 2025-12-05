@@ -255,6 +255,16 @@ class AgendaViewGUI:
         # Delegate to AgendaViewService which handles the date range logic
         return self.agenda_service.get_all_events()
 
+    def refresh_calendar_display(self):
+        """
+        Refresh the agenda view display.
+        Called by DayViewGUI after editing an event to update the list.
+        """
+        self.refresh_events_display()
+        # Also refresh parent if it exists (Month View)
+        if self.parent_gui:
+            self.parent_gui.refresh_calendar_display()
+
     def edit_selected_event(self):
         """Open edit dialog for the selected event."""
         # Get which item is currently selected in the treeview
@@ -293,12 +303,13 @@ class AgendaViewGUI:
 
             # Create a day view for this event's date
             # The day view has the event editing functionality we need
+            # Pass self as parent so Agenda View gets refreshed after edit
             day_view = DayViewGUI(
                 self.calendar,
                 date_obj.year,
                 date_obj.month,
                 date_obj.day,
-                self.parent_gui
+                self
             )
 
             # Find the event in the day view's event list and trigger edit
@@ -342,33 +353,48 @@ class AgendaViewGUI:
             tk.messagebox.showerror("Error", "Event not found in calendar.")
             return
 
-        # Show confirmation dialog before deleting (prevent accidental deletions)
-        # askyesno() returns True if user clicks "Yes", False if "No"
-        confirm = tk.messagebox.askyesno(
-            "Confirm Delete",
-            f"Are you sure you want to delete the event '{event_obj.title}'?"
-        )
+        # Check if it's a recurring event and ask about all occurrences
+        delete_all = False
+        if event_obj.is_recurring:
+            # Ask user if they want to delete all instances
+            response = tk.messagebox.askyesnocancel(
+                "Delete Recurring Event",
+                f"'{event_obj.title}' is a recurring event ({event_obj.recurrence_pattern}).\n\n"
+                f"Yes = Delete ALL occurrences\n"
+                f"No = Delete only THIS occurrence\n"
+                f"Cancel = Don't delete"
+            )
+            
+            if response is None:  # Cancel
+                return
+            delete_all = response  # True = delete all, False = delete single
+        else:
+            # Regular event confirmation
+            confirm = tk.messagebox.askyesno(
+                "Confirm Delete",
+                f"Are you sure you want to delete the event '{event_obj.title}'?"
+            )
+            if not confirm:
+                return
 
-        # Only proceed if user confirmed they want to delete
-        if confirm:
-            # Delete event using the new calendar system
-            success, message = self.agenda_service.delete_event(event_id)
+        # Delete event using the calendar service
+        success, message = self.calendar.delete_event(event_id, delete_all_recurring=delete_all)
 
-            # Check if the deletion was successful
-            if success:
-                # Refresh this agenda view to remove the deleted event from the list
-                self.refresh_events_display()
+        # Check if the deletion was successful
+        if success:
+            # Refresh this agenda view to remove the deleted event from the list
+            self.refresh_events_display()
 
-                # If there's a parent month view window, refresh it too
-                # This updates the month calendar to remove the event indicator
-                if self.parent_gui:
-                    self.parent_gui.refresh_calendar_display()
+            # If there's a parent month view window, refresh it too
+            # This updates the month calendar to remove the event indicator
+            if self.parent_gui:
+                self.parent_gui.refresh_calendar_display()
 
-                # Show success message to user
-                tk.messagebox.showinfo("Success", message)
-            else:
-                # Show error message if deletion failed
-                tk.messagebox.showerror("Error", message)
+            # Show success message to user
+            tk.messagebox.showinfo("Success", message)
+        else:
+            # Show error message if deletion failed
+            tk.messagebox.showerror("Error", message)
 
 
 class FilteredAgendaViewGUI(AgendaViewGUI):

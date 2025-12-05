@@ -108,7 +108,7 @@ class MonthViewGUI:
         Updates the current calendar reference based on the displayed month.
         """
         if self.showing_next:
-            year, month = self.calendar.calculate_next_month(self.current_year, self.current_month)
+            year, month = self.month_service.calculate_next_month(self.current_year, self.current_month)
         else:
             year, month = self.current_year, self.current_month
 
