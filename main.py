@@ -1,10 +1,4 @@
-"""
-To Include/Think about
 
-*******************************************************************************
-TODOList
-
-"""
 from CalendarService import CalendarService
 from MonthViewGUI_Class import MonthViewGUI
 

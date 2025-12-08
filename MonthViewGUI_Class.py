@@ -14,19 +14,21 @@ class MonthViewGUI:
     A GUI class that displays a monthly calendar view using tkinter.
     This class creates a graphical calendar interface that shows a month view
     with clickable day buttons, navigation between months, and proper highlighting
-    of today's date. Each month uses its own calendar object for event management.
+    of today's date. Uses a shared CalendarService for all event operations.
 
     Attributes:
         window (tk.Tk): Main tkinter window
-        today (datetime.date): Today's date for highlighting
+        calendar (CalendarService): Shared calendar service for event operations
+        month_service (MonthViewService): Service for month-specific operations
         current_month (int): Current month being displayed
         current_year (int): Current year being displayed
         showing_next (bool): Flag to track if showing current or next month
         header (tk.Label): Label displaying the month and year
         switch_btn (tk.Button): Button to switch between current and next month
         frame (tk.Frame): Frame containing the calendar grid
-        month_calendars (dict): Dictionary storing Calendar objects by month key
-        current_calendar (Calendar): Currently active month calendar
+        week_btn (tk.Button): Button to open week view
+        agenda_btn (tk.Button): Button to open agenda view
+        filter_btn (tk.Button): Button to open filter dialog
     """
 
     def __init__(self, calendar_obj=None):
@@ -297,9 +299,6 @@ class MonthViewGUI:
                         event_label.place(relx=0.5, rely=0.5, anchor="center")
                         event_label.bind("<Button-1>", lambda e, y=year, m=month, d=day_num: self.on_day_click(y, m, d))
                     
-                    # Add right-click context menu for week view option
-                    day_frame.bind("<Button-3>",
-                                    lambda e, y=year, m=month, d=day_num: self.show_context_menu(e, y, m, d))
                     day_num += 1
 
                 # Empty frame for days after the month ends

@@ -5,9 +5,6 @@ This service handles all agenda-specific calendar operations for the AgendaViewG
 It includes event retrieval across date ranges and event management operations.
 """
 
-import datetime
-import calendar
-
 
 class AgendaViewService:
     """
